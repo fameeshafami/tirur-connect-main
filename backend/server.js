@@ -25,12 +25,13 @@ const PORT = process.env.PORT || 5000;
 //     credentials: true,
 //   })
 // );
-app.use(
-  cors({
-    origin: ['https://tirur-connect-main.onrender.com','https://tirur-connect-main.onrender.com'],
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: ['https://tirur-connect-main.onrender.com','https://tirur-connect-main.onrender.com','https://indigo-lion-193760.hostingersite.com'],
+//     credentials: true,
+//   })
+// );
+app.use(cors());
 
 app.use(express.json({ limit: '12mb' }));
 
