@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ഞങ്ങളെക്കുറിച്ച് — തിരൂർ കണക്ട് (About Us)</title>
+  <link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Premium About Page Styles */
+    .about-hero {
+      padding: 24px 0 16px;
+    }
+    .about-hero-card {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 28px;
+      align-items: center;
+      background: linear-gradient(145deg, #ffffff 0%, #f4fbf7 60%, #eef8f3 100%);
+      border: 1px solid rgba(15, 110, 81, 0.15);
+      border-radius: 24px;
+      padding: 32px 30px;
+      box-shadow: 0 16px 40px rgba(15, 110, 81, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .about-hero-card::before {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(242, 169, 0, 0.18) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+    }
+    .kicker-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 110, 81, 0.1);
+      color: var(--brand-dark);
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .about-hero h1 {
+      font-size: clamp(26px, 3.2vw, 36px);
+      line-height: 1.3;
+      color: var(--brand-dark);
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .about-hero p.lead {
+      font-size: 15.5px;
+      line-height: 1.8;
+      color: var(--ink);
+      opacity: 0.9;
+      margin-bottom: 20px;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .about-hero-visual {
+      position: relative;
+      min-height: 300px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 14px 30px rgba(15, 110, 81, 0.16);
+      border: 2px solid #fff;
+    }
+    .about-hero-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .hero-badge-overlay {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      padding: 10px 14px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .hero-badge-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--brand-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .hero-badge-text b {
+      display: block;
+      font-size: 13px;
+      color: var(--brand-dark);
+    }
+    .hero-badge-text span {
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+
+    /* Stats Grid */
+    .about-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+    }
+    .stat-box {
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      border-radius: 18px;
+      padding: 18px 16px;
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(15, 110, 81, 0.18);
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+    .stat-box:hover {
+      transform: translateY(-3px);
+    }
+    .stat-box strong {
+      display: block;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.1;
+      color: #fff;
+    }
+    .stat-box .stat-label {
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 6px;
+      color: var(--accent);
+      display: block;
+    }
+    .stat-box span.sub {
+      font-size: 11px;
+      opacity: 0.85;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* Story Card */
+    .story-section {
+      margin-top: 26px;
+    }
+    .story-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px 30px;
+      box-shadow: var(--shadow);
+    }
+    .story-head {
+      margin-bottom: 20px;
+    }
+    .story-head h2 {
+      font-size: 24px;
+      color: var(--brand-dark);
+      font-weight: 800;
+      line-height: 1.35;
+      margin-bottom: 12px;
+    }
+    .story-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      font-size: 14.5px;
+      line-height: 1.85;
+      color: var(--ink);
+    }
+    .story-content p {
+      margin-bottom: 12px;
+    }
+    .highlight-quote {
+      background: linear-gradient(145deg, #fef8eb, #fff9ee);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 14px 14px 0;
+      padding: 16px 18px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #7a5400;
+      font-weight: 600;
+      margin: 14px 0 6px;
+    }
+
+    /* Values / Offerings Grid */
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .pillar-card {
+      background: #fafcfb;
+      border: 1px solid rgba(15, 110, 81, 0.12);
+      border-radius: 18px;
+      padding: 20px 16px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .pillar-card:hover {
+      background: #fff;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(15, 110, 81, 0.12);
+      border-color: var(--brand);
+    }
+    .pillar-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--brand-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 14px;
+    }
+    .pillar-card h3 {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--brand-dark);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .pillar-card p {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--ink-soft);
+      margin: 0;
+      flex: 1;
+    }
+
+    /* Target Audience 3 Columns */
+    .audience-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .audience-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+    }
+    .audience-tag {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--brand);
+      background: var(--brand-light);
+      padding: 3px 9px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .audience-card h3 {
+      font-size: 17px;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+    .audience-card ul {
+      margin: 0;
+      padding-left: 18px;
+      list-style-type: disc;
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .audience-card li {
+      margin-bottom: 6px;
+    }
+
+    /* Call To Action Banner */
+    .about-cta {
+      margin: 32px 0 20px;
+      background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 100%);
+      border-radius: 24px;
+      padding: 36px 30px;
+      color: #fff;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    .about-cta h2 {
+      font-size: clamp(22px, 2.6vw, 30px);
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .about-cta p {
+      max-width: 650px;
+      margin: 0 auto 22px;
+      font-size: 15px;
+      line-height: 1.7;
+      opacity: 0.94;
+    }
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 991px) {
+      .about-hero-card,
+      .story-content {
+        grid-template-columns: 1fr;
+      }
+      .pillars-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .about-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .audience-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 600px) {
+      .about-hero-card,
+      .story-card,
+      .about-cta {
+        padding: 22px 18px;
+      }
+      .about-stats {
+        grid-template-columns: 1fr;
+      }
+      .pillars-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<main>
+  <!-- Hero Section -->
+  <section class="section about-hero">
+    <div class="container">
+      <div class="about-hero-card">
+        <div>
+          <span class="kicker-tag">🌿 നമ്മുടെ നാട് · നമ്മുടെ കൂട്ടായ്മ</span>
+          <h1>തിരൂരിന്റെ സ്വന്തം ഡിജിറ്റൽ ഇടത്തിലേക്ക് സ്വാഗതം</h1>
+          <p class="lead">
+            തിരൂരിലെ കടകൾ, ആശുപത്രികൾ, പ്ലംബിംഗ്-ഇലക്ട്രിക്കൽ ജോലിക്കാർ, തൊഴിലവസരങ്ങൾ, അടിയന്തര സേവനങ്ങൾ തുടങ്ങി നിത്യജീവിതത്തിന് ആവശ്യമായതെല്ലാം വിരൽത്തുമ്പിൽ എത്തിക്കുന്ന ജനകീയ പ്ലാറ്റ്‌ഫോമാണ് <b>തിരൂർ കണക്ട് (Tirur Connect)</b>. നാട്ടുകാരെയും വ്യാപാരികളെയും പരസ്പരം ബന്ധിപ്പിച്ച് നമ്മുടെ നാടിനെ ഒരുമിച്ച് വളർത്തുകയാണ് ഞങ്ങളുടെ ലക്ഷ്യം.
+          </p>
+          <div class="hero-actions">
+            <a href="directory.html" class="btn btn-primary">ഡയറക്ടറി കാണുക →</a>
+            <a href="list-business.html" class="btn btn-outline">കടയുടെ വിവരങ്ങൾ ചേർക്കുക ➕</a>
+          </div>
+        </div>
+
+        <div class="about-hero-visual">
+          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80" alt="തിരൂർ കമ്മ്യൂണിറ്റി" onerror="this.src='img/images (10).jpg'">
+          <!-- <div class="hero-badge-overlay">
+            <div class="hero-badge-icon">🤝</div>
+            <div class="hero-badge-text">
+              <b>തിരൂർ ചാംബർ ഓഫ് കൊമേഴ്സ്</b>
+              <span>വിശ്വാസ്യതയുള്ള വ്യാപാരി ശൃംഖല</span>
+            </div>
+          </div> -->
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="about-stats">
+        <div class="stat-box">
+          <strong>250+</strong>
+          <span class="stat-label">നാട്ടിലെ കടകൾ</span>
+          <span class="sub">വിശ്വാസ്യതയുള്ള സ്ഥാപനങ്ങൾ</span>
+        </div>
+        <div class="stat-box">
+          <strong>40+</strong>
+          <span class="stat-label">സേവന മേഖലകൾ</span>
+          <span class="sub">ആരോഗ്യം, വിദ്യാഭ്യാസം, കടകൾ</span>
+        </div>
+        <div class="stat-box">
+          <strong>100+</strong>
+          <span class="stat-label">തൊഴിലവസരങ്ങൾ</span>
+          <span class="sub">നാട്ടിൽ തന്നെയുള്ള ജോലികൾ</span>
+        </div>
+        <div class="stat-box">
+          <strong>100%</strong>
+          <span class="stat-label">സൗജന്യ സേവനം</span>
+          <span class="sub">നാട്ടുകാർക്കായി എപ്പോഴും തുറന്നത്</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Story & Purpose Section -->
+  <section class="section story-section">
+    <div class="container">
+      <div class="story-card">
+        <div class="story-head">
+          <span class="tag open">എന്തിനാണ് ഈ കൂട്ടായ്മ?</span>
+          <h2>ഒരു നാട് ഒന്നിക്കുമ്പോൾ പുരോഗതി എളുപ്പമാകുന്നു</h2>
+        </div>
+        <div class="story-content">
+          <div>
+            <p>
+              നമ്മുടെ തിരൂരിൽ അത്യാവശ്യ ഘട്ടത്തിൽ ഒരു പ്ലംബറെയോ, ഇലക്ട്രീഷ്യനെയോ, അടുത്തുള്ള ക്ലിനിക്കിന്റെ ഫോൺ നമ്പറോ തിരഞ്ഞ് പലപ്പോഴും നമ്മൾ വിഷമിക്കാറുണ്ട്. അതുപോലെ മികച്ച സാധനങ്ങളും സേവനങ്ങളും നൽകുന്ന നമ്മുടെ നാട്ടിലെ ചെറുകിട കച്ചവടക്കാർക്ക് അവരുടെ വിവരങ്ങൾ പൊതുജനങ്ങളിലേക്ക് എത്തിക്കാനും ബുദ്ധിമുട്ടായിരുന്നു.
+            </p>
+            <p>
+              ഈ രണ്ട് ആവശ്യങ്ങളെയും ഒന്നിച്ചു ചേർത്ത് പരിഹരിക്കാനാണ് <b>തിരൂർ കണക്ട്</b> ആരംഭിച്ചത്. ഇവിടെ ഓരോ സാധാരണക്കാരനും തനിക്ക് ആവശ്യമുള്ളത് വേഗത്തിൽ കണ്ടെത്താം. ഒരു ഇടനിലക്കാരന്റെയും ആവശ്യമില്ലാതെ നേരിട്ട് വിളിച്ച് സംസാരിക്കാം.
+            </p>
+          </div>
+          <div>
+            <p>
+              ഓൺലൈൻ ഭീമന്മാരുടെ കടന്നുവരവിൽ നമ്മുടെ നാടൻ കടകളും പരമ്പരാഗത വ്യാപാരങ്ങളും പിന്നോട്ട് പോകരുത്. പ്രാദേശിക കച്ചവടക്കാരെ പിന്തുണയ്ക്കാനും, നാട്ടിലെ യുവാക്കൾക്ക് തൊഴിൽ കണ്ടെത്താനും നാടിനൊപ്പം നിൽക്കുന്ന ഒരിടം വേണം.
+            </p>
+            <div class="highlight-quote">
+              💬 "നമ്മുടെ കടകളിൽ നിന്ന് വാങ്ങാം, നമ്മുടെ നാട്ടിലെ ആളുകൾക്ക് തൊഴിൽ നൽകാം. അങ്ങനെ നമ്മുടെ നാടിന്റെ സമ്പത്ത് നമ്മുടെ നാട്ടിൽ തന്നെ വളരട്ടെ."
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Pillars Grid -->
+        <div class="pillars-grid">
+          <div class="pillar-card">
+            <div class="pillar-icon">📍</div>
+            <h3>എല്ലാം ഒരൊറ്റ ക്ലിക്കിൽ</h3>
+            <p>കടകൾ, വർക്ക്‌ഷോപ്പുകൾ, ക്ലിനിക്കുകൾ, ടാക്സി ഡ്രൈവർമാർ എന്നിവരുടെ വിവരങ്ങൾ ഫോൺ നമ്പർ സഹിതം പെട്ടെന്ന് കണ്ടെത്താം.</p>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-icon">🏪</div>
+            <h3>ചെറുകിടക്കാർക്ക് വലിയ വേദി</h3>
+            <p>ചെറിയ പെട്ടിക്കട മുതൽ വലിയ ഷോറൂമുകൾ വരെയുള്ളവർക്ക് അവരുടെ വിവരങ്ങളും ഓഫറുകളും നാട്ടുകാരിലേക്ക് സൗജന്യമായി പങ്കിടാം.</p>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-icon">💼</div>
+            <h3>നാട്ടിലെ ജോലികൾ</h3>
+            <p>വിദ്യാഭ്യാസ യോഗ്യതയ്ക്കനുസരിച്ച് തിരൂരിലും സമീപപ്രദേശങ്ങളിലുമുള്ള ഒഴിവുകളിലേക്ക് നേരിട്ട് അപേക്ഷിക്കാം.</p>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-icon">🎖️</div>
+            <h3>ചാംബർ പിന്തുണ</h3>
+            <p>തിരൂർ ചാംബർ ഓഫ് കൊമേഴ്സിന്റെ പിന്തുണയോടെ വ്യാപാരികൾക്ക് നിയമപരമായ മാർഗ്ഗനിർദ്ദേശങ്ങളും സഹകരണവും.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Helps Everyone -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>ആർക്കൊക്കെയാണ് തിരൂർ കണക്ട് പ്രയോജനപ്പെടുന്നത്?</h2>
+        <span class="text-soft">എല്ലാവർക്കുമായി തുറന്ന പ്ലാറ്റ്‌ഫോം</span>
+      </div>
+
+      <div class="audience-grid">
+        <div class="audience-card">
+          <span class="audience-tag">നാട്ടുകാർക്ക്</span>
+          <h3>👨‍👩‍👧 സാധാരണ ജനങ്ങൾക്ക്</h3>
+          <ul>
+            <li>വീട്ടാവശ്യങ്ങൾക്കുള്ള പ്ലംബർ, ഇലക്ട്രീഷ്യൻ, ആശാരി എന്നിവരെ ലഭിക്കാൻ</li>
+            <li>ആശുപത്രികൾ, ആംബുലൻസ്, ഫയർഫോഴ്സ്, പോലീസ് സഹായ നമ്പറുകൾ</li>
+            <li>കടകളുടെ പ്രവൃത്തി സമയം, ഓഫറുകൾ, ലൊക്കേഷൻ അറിയാൻ</li>
+            <li>എല്ലാ സേവനങ്ങളും തികച്ചും സൗജന്യമായി തിരയാൻ</li>
+          </ul>
+        </div>
+
+        <div class="audience-card">
+          <span class="audience-tag">വ്യാപാരികൾക്ക്</span>
+          <h3>🏪 കടയുടമകൾക്കും സർവീസുകൾക്കും</h3>
+          <ul>
+            <li>നിങ്ങളുടെ കടയോ തൊഴിലോ പൊതു ഡയറക്ടറിയിൽ സൗജന്യമായി ലിസ്റ്റ് ചെയ്യാം</li>
+            <li>ഓഫറുകളും പുതിയ ഉൽപ്പന്നങ്ങളും നാട്ടുകാരിലേക്ക് വേഗത്തിൽ എത്തിക്കാം</li>
+            <li>സ്ഥാപനത്തിന്റെ വിശ്വാസ്യത വർദ്ധിപ്പിച്ച് കൂടുതൽ കസ്റ്റമർമാരെ നേടാം</li>
+            <li>പ്രീമിയം അംഗത്വത്തിലൂടെ കൂടുതൽ പരസ്യ സാധ്യതകൾ സ്വന്തമാക്കാം</li>
+          </ul>
+        </div>
+
+        <div class="audience-card">
+          <span class="audience-tag">ഉദ്യോഗാർത്ഥികൾക്ക്</span>
+          <h3>🎓 യുവാക്കൾക്കും വിദ്യാർത്ഥികൾക്കും</h3>
+          <ul>
+            <li>തിരൂരിലെ സ്ഥാപനങ്ങളിലെ ഒഴിവുകൾ ഇടനിലക്കാരില്ലാതെ അറിയാം</li>
+            <li>സെയിൽസ്, ഓഫീസ്, കമ്പ്യൂട്ടർ, ടെക്നീഷ്യൻ ജോലികൾക്ക് എളുപ്പത്തിൽ അപേക്ഷിക്കാം</li>
+            <li>പാർട്ട് ടൈം, ഫുൾ ടൈം തൊഴിലുകൾ വേർതിരിച്ചു കാണാം</li>
+            <li>തൊഴിൽ ദാതാവുമായി നേരിട്ട് ഫോണിൽ സംസാരിക്കാനുള്ള സൗകര്യം</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Warm Call to Action -->
+  <section class="section">
+    <div class="container">
+      <div class="about-cta">
+        <h2>വരൂ, നമ്മുടെ നാടിന്റെ വളർച്ചയിൽ നിങ്ങളും പങ്കാളിയാകൂ!</h2>
+        <p>
+          താങ്കളുടെ കടയോ, സേവനമോ, തൊഴിലോ ഇതുവരെ തിരൂർ കണക്റ്റിൽ ചേർത്തിട്ടില്ലേ? 2 മിനിറ്റിനുള്ളിൽ ഒരു രൂപ പോലും ചെലവില്ലാതെ നിങ്ങളുടെ വിവരങ്ങൾ രജിസ്റ്റർ ചെയ്യാം.
+        </p>
+        <div class="cta-buttons">
+          <a href="list-business.html" class="btn btn-accent" style="font-size: 15px; padding: 12px 24px;">സൗജന്യമായി രജിസ്റ്റർ ചെയ്യുക 📋</a>
+          <a href="membership.html" class="btn btn-outline" style="border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.12); color: #fff; font-size: 15px; padding: 12px 24px;">ചാംബർ ഓഫ് കൊമേഴ്സ് അംഗത്വം 🎖️</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+  renderChrome('about');
+</script>
+</body>
+</html>

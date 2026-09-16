@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chamber Member Verification — Tirur Connect</title>
+<link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* ── Page background ── */
+  .verify-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a4f3a 0%, #0f6e51 50%, #1a9e74 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 32px 16px 48px;
+  }
+
+  /* ── Card wrapper ── */
+  .id-card-wrap {
+    width: 100%; max-width: 420px;
+    filter: drop-shadow(0 20px 60px rgba(0,0,0,.35));
+  }
+
+  /* ── Main card ── */
+  .pro-id-card {
+    background: #ffffff;
+    border-radius: 22px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── Top banner ── */
+  .pro-id-header {
+    background: linear-gradient(135deg, #0a4f3a 0%, #0f6e51 100%);
+    padding: 20px 22px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pro-id-header::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,.07); border-radius: 50%;
+  }
+  .pro-id-header::after {
+    content: '';
+    position: absolute; bottom: -50px; left: -20px;
+    width: 140px; height: 140px;
+    background: rgba(255,255,255,.05); border-radius: 50%;
+  }
+  .pro-id-org {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px; position: relative; z-index: 1;
+  }
+  .pro-id-org-logo {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: rgba(255,255,255,.2);
+    display: grid; place-items: center; font-size: 18px; flex-shrink: 0;
+  }
+  .pro-id-org-name {
+    color: rgba(255,255,255,.9); font-size: 11px; font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase; line-height: 1.3;
+  }
+  .pro-id-org-sub { color: rgba(255,255,255,.6); font-size: 10px; font-weight: 600; }
+
+  /* verified / status strip */
+  .pro-id-status-bar {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+    border-radius: 30px; padding: 4px 12px; position: relative; z-index: 1;
+  }
+  .pro-id-status-bar.verified { background: rgba(34,197,94,.2); border-color: rgba(34,197,94,.4); }
+  .pro-id-status-bar.invalid  { background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.4); }
+  .pro-id-status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #22c55e; flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(34,197,94,.3);
+  }
+  .pro-id-status-dot.invalid { background: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,.3); }
+  .pro-id-status-text { color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+
+  /* ── Business identity block ── */
+  .pro-id-identity {
+    padding: 20px 22px 0;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .pro-id-biz-logo {
+    width: 64px; height: 64px; border-radius: 14px;
+    background: linear-gradient(135deg, #e6f4ef, #c8ead9);
+    border: 2px solid #c8ead9; display: grid; place-items: center;
+    font-size: 28px; flex-shrink: 0; overflow: hidden;
+  }
+  .pro-id-biz-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .pro-id-biz-info { flex: 1; min-width: 0; }
+  .pro-id-biz-name {
+    font-size: 22px; font-weight: 800; color: #0a4f3a;
+    line-height: 1.2; margin: 0 0 4px; word-break: break-word;
+  }
+  .pro-id-biz-cat {
+    display: inline-block; background: #e6f4ef; color: #0f6e51;
+    font-size: 11px; font-weight: 700; padding: 3px 10px;
+    border-radius: 20px; letter-spacing: .03em;
+  }
+
+  /* ── QR + member number strip ── */
+  .pro-id-qr-strip {
+    margin: 18px 22px 0;
+    background: linear-gradient(135deg, #f8fcfa, #eef7f3);
+    border: 1px solid #d4ede3; border-radius: 14px;
+    padding: 14px; display: flex; align-items: center; gap: 14px;
+  }
+  .pro-id-qr-box {
+    width: 82px; height: 82px; flex-shrink: 0;
+    background: #fff; border-radius: 10px;
+    border: 1.5px solid #c8ead9; padding: 5px;
+    display: grid; place-items: center;
+  }
+  .pro-id-qr-box img { width: 100%; height: 100%; display: block; border-radius: 4px; }
+  .pro-id-qr-info { flex: 1; min-width: 0; }
+  .pro-id-member-num {
+    font-size: 17px; font-weight: 800; color: #0a4f3a;
+    letter-spacing: .04em; margin-bottom: 4px;
+  }
+  .pro-id-validity {
+    font-size: 11.5px; color: #5b6b64; margin-bottom: 6px;
+  }
+  .pro-id-validity b { color: #0a4f3a; }
+  .pro-id-qr-hint { font-size: 10.5px; color: #8fa89e; }
+
+  /* ── Details grid ── */
+  .pro-id-details {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1px; margin: 18px 0 0;
+    background: #e8f2ee;
+  }
+  .pro-id-detail-cell {
+    background: #fff; padding: 12px 16px;
+  }
+  .pro-id-detail-cell.full { grid-column: 1 / -1; }
+  .pro-id-detail-label {
+    font-size: 10px; font-weight: 700; color: #8fa89e;
+    text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px;
+  }
+  .pro-id-detail-value {
+    font-size: 13px; font-weight: 700; color: #1a2420;
+    word-break: break-word; line-height: 1.4;
+  }
+  .pro-id-detail-value.green { color: #0f6e51; }
+  .pro-id-detail-value.muted { color: #8fa89e; font-weight: 500; }
+
+  /* ── Footer bar ── */
+  .pro-id-footer {
+    background: #f5f9f7; border-top: 1px solid #e8f2ee;
+    padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .pro-id-footer-brand {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 700; color: #0a4f3a;
+  }
+  .pro-id-footer-brand span { opacity: .7; font-weight: 600; }
+  .pro-id-issued { font-size: 10.5px; color: #8fa89e; }
+
+  /* ── Description note ── */
+  .pro-id-desc {
+    padding: 14px 22px 0;
+    font-size: 12.5px; color: #5b6b64; line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ── Privacy note ── */
+  .pro-id-privacy {
+    margin: 14px 22px 22px;
+    background: #f5f9f7; border-radius: 10px; padding: 10px 13px;
+    font-size: 11px; color: #8fa89e; line-height: 1.5;
+  }
+
+  /* ── Action buttons ── */
+  .pro-id-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 0 22px 22px;
+  }
+  .pro-id-btn {
+    flex: 1; min-width: 120px;
+    padding: 10px 14px; border-radius: 10px; font-size: 13px;
+    font-weight: 700; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    text-decoration: none; transition: .15s ease;
+  }
+  .pro-id-btn-primary { background: #0f6e51; color: #fff; }
+  .pro-id-btn-primary:hover { background: #0a4f3a; }
+  .pro-id-btn-outline { background: #fff; color: #0f6e51; border: 1.5px solid #0f6e51; }
+  .pro-id-btn-outline:hover { background: #e6f4ef; }
+
+  /* ── Loading / error states ── */
+  .pro-id-state {
+    background: #fff; border-radius: 22px; padding: 48px 28px;
+    text-align: center;
+  }
+  .pro-id-state .ic { font-size: 48px; margin-bottom: 12px; }
+  .pro-id-state h2 { font-size: 18px; color: #1a2420; margin-bottom: 6px; }
+  .pro-id-state p { font-size: 13.5px; color: #5b6b64; }
+
+  /* ── Responsive ── */
+  @media (max-width: 460px) {
+    .pro-id-details { grid-template-columns: 1fr; }
+    .pro-id-detail-cell.full { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<main>
+  <div class="verify-page">
+    <div class="id-card-wrap">
+      <div id="memberProfile" aria-live="polite"></div>
+    </div>
+  </div>
+</main>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+renderChrome('membership');
+
+const target = document.getElementById('memberProfile');
+const publicId = new URLSearchParams(location.search).get('publicId');
+
+const esc = v => v === undefined || v === null || v === ''
+  ? '—'
+  : String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+const fmt = v => v ? new Date(v).toLocaleDateString('en-IN', {year:'numeric',month:'long',day:'numeric'}) : '—';
+
+function renderLoading() {
+  target.innerHTML = `
+    <div class="pro-id-state">
+      <div class="ic">🔍</div>
+      <h2>Verifying membership…</h2>
+      <p>Please wait while we check the Chamber records.</p>
+    </div>`;
+}
+
+function renderError(title, message) {
+  target.innerHTML = `
+    <div class="pro-id-state">
+      <div class="ic">🔒</div>
+      <h2>${esc(title)}</h2>
+      <p>${esc(message)}</p>
+    </div>`;
+}
+
+function renderMember(member) {
+  const verified = member.verified;
+  const statusLabel = verified ? '✓ CHAMBER VERIFIED' : `${esc(member.status).toUpperCase()} MEMBERSHIP`;
+  const statusClass = verified ? 'verified' : 'invalid';
+  const dotClass   = verified ? '' : 'invalid';
+
+  const logo = member.logo
+    ? `<img src="${esc(member.logo)}" alt="${esc(member.businessName)}">`
+    : '🏪';
+
+  // QR image — use the publicId to generate QR via free API
+  const publicUrl = window.location.href;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=1&data=${encodeURIComponent(publicUrl)}`;
+
+  const website = member.website
+    ? `<a href="${esc(member.website)}" target="_blank" rel="noopener" style="color:#0f6e51;">${esc(member.website)}</a>`
+    : '<span class="muted">—</span>';
+
+  target.innerHTML = `
+    <div class="pro-id-card">
+
+      <!-- Header -->
+      <div class="pro-id-header">
+        <div class="pro-id-org">
+          <div class="pro-id-org-logo">🏛️</div>
+          <div>
+            <div class="pro-id-org-name">Tirur Chamber of Commerce</div>
+            <div class="pro-id-org-sub">tirurconnect.com · Official Membership Card</div>
+          </div>
+        </div>
+        <div class="pro-id-status-bar ${statusClass}">
+          <div class="pro-id-status-dot ${dotClass}"></div>
+          <span class="pro-id-status-text">${statusLabel}</span>
+        </div>
+      </div>
+
+      <!-- Business Identity -->
+      <div class="pro-id-identity">
+        <div class="pro-id-biz-logo">${logo}</div>
+        <div class="pro-id-biz-info">
+          <div class="pro-id-biz-name">${esc(member.businessName)}</div>
+          <span class="pro-id-biz-cat">${esc(member.category)}</span>
+        </div>
+      </div>
+
+      <!-- QR + Member Number -->
+      <div class="pro-id-qr-strip">
+        <div class="pro-id-qr-box">
+          <img src="${qrSrc}" alt="Verification QR">
+        </div>
+        <div class="pro-id-qr-info">
+          <div class="pro-id-member-num">${esc(member.membershipNumber)}</div>
+          <div class="pro-id-validity">Valid until <b>${fmt(member.membershipExpiryDate)}</b></div>
+          <div class="pro-id-qr-hint">📲 Scan to verify this member</div>
+        </div>
+      </div>
+
+      ${member.description ? `<div class="pro-id-desc">"${esc(member.description)}"</div>` : ''}
+
+      <!-- Details Grid -->
+      <div class="pro-id-details">
+        <div class="pro-id-detail-cell">
+          <div class="pro-id-detail-label">Business Owner</div>
+          <div class="pro-id-detail-value">${esc(member.ownerName)}</div>
+        </div>
+        <div class="pro-id-detail-cell">
+          <div class="pro-id-detail-label">Business Category</div>
+          <div class="pro-id-detail-value">${esc(member.category)}</div>
+        </div>
+        <div class="pro-id-detail-cell">
+          <div class="pro-id-detail-label">Contact Phone</div>
+          <div class="pro-id-detail-value">${esc(member.phone)}</div>
+        </div>
+        <div class="pro-id-detail-cell">
+          <div class="pro-id-detail-label">Contact Email</div>
+          <div class="pro-id-detail-value">${esc(member.email)}</div>
+        </div>
+        <div class="pro-id-detail-cell full">
+          <div class="pro-id-detail-label">Business Address</div>
+          <div class="pro-id-detail-value">${esc(member.address)}</div>
+        </div>
+        <div class="pro-id-detail-cell">
+          <div class="pro-id-detail-label">Website</div>
+          <div class="pro-id-detail-value">${website}</div>
+        </div>
+        <div class="pro-id-detail-cell">
+          <div class="pro-id-detail-label">Membership Status</div>
+          <div class="pro-id-detail-value ${verified ? 'green' : ''}">${esc(member.status).toUpperCase()}</div>
+        </div>
+        <div class="pro-id-detail-cell">
+          <div class="pro-id-detail-label">Member Since</div>
+          <div class="pro-id-detail-value">${fmt(member.membershipStartDate)}</div>
+        </div>
+        <div class="pro-id-detail-cell">
+          <div class="pro-id-detail-label">QR Verification</div>
+          <div class="pro-id-detail-value ${member.qrStatus === 'active' ? 'green' : 'muted'}">
+            ${member.qrStatus === 'active' ? '✓ Active QR Identity' : 'Verification Unavailable'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy note -->
+      <div class="pro-id-privacy">
+        🔒 This is a public Chamber verification profile. Account credentials, payment records, documents, CVs, and internal administrative data are not displayed.
+      </div>
+
+      <!-- Actions -->
+      <div class="pro-id-actions">
+        <button class="pro-id-btn pro-id-btn-primary" onclick="window.print()">🖨️ Print Card</button>
+        <a class="pro-id-btn pro-id-btn-outline" href="directory.html">🏪 View Directory</a>
+      </div>
+
+      <!-- Footer -->
+      <div class="pro-id-footer">
+        <div class="pro-id-footer-brand">
+          <span>🏛️</span>
+          <div>Tirur Connect <span>· Chamber of Commerce</span></div>
+        </div>
+        <div class="pro-id-issued">Issued by Tirur Chamber of Commerce</div>
+      </div>
+
+    </div>`;
+}
+
+async function loadProfile() {
+  if (!publicId) {
+    renderError('Member profile not found', 'This QR link is missing its public verification ID.');
+    return;
+  }
+  renderLoading();
+  try {
+    const response = await fetch(`${API_BASE_URL}/chamber/public/${encodeURIComponent(publicId)}`);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.member) {
+      renderError('QR verification unavailable', data.message || 'This QR code is invalid or has been deactivated.');
+      return;
+    }
+    renderMember(data.member);
+  } catch (error) {
+    renderError('Verification temporarily unavailable', 'Unable to contact the verification service. Please try again shortly.');
+  }
+}
+
+loadProfile();
+</script>
+</body>
+</html>

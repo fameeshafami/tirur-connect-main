@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>നമ്പർ ചേർക്കാൻ സമർപ്പിക്കാം — List Your Business — Tirur Connect</title>
+<link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .kk-wrap{ max-width:520px; margin:0 auto; padding:18px 16px 40px; }
+  .kk-topbar{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .kk-back{ width:38px; height:38px; border-radius:50%; background:#fff; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--ink); flex-shrink:0; }
+  .kk-title h2{ font-size:16px; color:var(--brand-dark); margin-bottom:2px; }
+  .kk-title p{ font-size:12px; color:var(--ink-soft); margin:0; }
+  .kk-card{ background:#fff; border:1px solid var(--border); border-radius:18px; padding:20px 18px; box-shadow:var(--shadow); }
+  .kk-label{ font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+  .kk-label small{ font-weight:600; color:var(--ink-soft); }
+  .kk-send{ background:var(--brand); color:#fff; border:none; border-radius:12px; padding:14px; width:100%; font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .kk-send:hover{ background:var(--brand-dark); }
+  .kk-note{ background:var(--brand-light); border-radius:12px; padding:10px 12px; font-size:12px; color:var(--brand-dark); margin-bottom:16px; display:flex; gap:8px; }
+  .location-control{ display:flex; align-items:center; overflow:hidden; border:1px solid var(--border); border-radius:12px; background:#fff; }
+  .location-control:focus-within{ border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-light); }
+  .location-hub{ padding:11px 12px; background:#f1f7f4; color:var(--brand-dark); font-size:14px; font-weight:700; border-right:1px solid var(--border); }
+  .location-control select{ width:auto; min-width:0; flex:1; padding:11px 10px; border:0; border-radius:0; box-shadow:none; }
+  .kk-field{ width:100%; border:1px solid var(--border); border-radius:12px; padding:12px 14px; font-size:15px; color:var(--ink); background:#fff; box-sizing:border-box; transition:border-color .2s, box-shadow .2s; }
+  .kk-field:focus{ outline:none; border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-light); }
+  .kk-field[readonly]{ background:#f4f8f5; color:var(--brand-dark); font-weight:700; }
+  textarea.kk-field{ min-height:90px; resize:vertical; }
+  .hint{ margin:7px 0 0; color:var(--ink-soft); font-size:11.5px; }
+</style>
+</head>
+<body>
+
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<main>
+  <div class="kk-wrap">
+
+    <div class="kk-topbar">
+      <a href="directory.html" class="kk-back">←</a>
+      <div class="kk-title">
+        <h2>നമ്പർ ചേർക്കാൻ സമർപ്പിക്കാം</h2>
+        <p>Submit a Number / List Your Shop or Service</p>
+      </div>
+    </div>
+
+    <div class="kk-note">
+      <span>ℹ️</span>
+      <span>നിങ്ങളുടെ കടയോ തൊഴിലോ ആപ്പിൽ സൗജന്യമായി ചേർക്കാം. This is a <b>free listing</b> — separate from paid Chamber of Commerce Membership. Submissions are reviewed by an admin before publishing.</span>
+    </div>
+
+    <div id="formView" class="kk-card">
+      <div class="form-group">
+        <label class="kk-label">പേര്* <small>(Name)</small></label>
+        <input type="text" id="l_name" placeholder="ഉദാ: സജീവൻ / റോയൽ ബേക്കേഴ്സ്">
+      </div>
+
+      <div class="form-group">
+        <label class="kk-label">ഫോൺ നമ്പർ* <small>(Phone Number)</small></label>
+        <input type="tel" id="l_phone" placeholder="10-digit Mobile Number">
+      </div>
+
+      <div class="form-group">
+        <label class="kk-label">വിഭാഗം <small>(Category)</small></label>
+        <select id="l_cat"></select>
+      </div>
+
+      <div class="form-group">
+        <label class="kk-label">സേവനം / കടയുടെ വിവരങ്ങൾ* <small>(Service / Shop Details)</small></label>
+        <textarea id="l_details" placeholder="തൊഴിൽ അല്ലെങ്കിൽ കടയുടെ വിശദവിവരങ്ങൾ…"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="kk-label">സ്ഥലം <small>(Location)</small></label>
+        <input class="kk-field" type="text" id="l_city" value="Tirur" readonly required aria-label="City">
+        <p class="hint">Tirur is fixed as the city for this listing.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="kk-label">വിലാസം <small>(Address)</small></label>
+        <textarea class="kk-field" id="l_address" placeholder="Building / Street / Area" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="kk-label">ലാൻഡ്‌മാർക്ക് <small>(Landmark)</small></label>
+        <input class="kk-field" type="text" id="l_landmark" placeholder="Near bus stand / hospital / school">
+      </div>
+
+      <div class="form-group">
+        <label class="kk-label">പിൻ‌కോഡ് / Postal Code</label>
+        <input class="kk-field" type="text" id="l_postal" placeholder="676101" inputmode="numeric" maxlength="6" required>
+      </div>
+
+      <button class="kk-send" onclick="sendListing()">📩 അയക്കുക (Send)</button>
+    </div>
+
+    <div id="successView" class="kk-card center" style="display:none;">
+      <div style="font-size:38px;">✅</div>
+      <h3 style="margin-top:8px;">സമർപ്പിച്ചു! Submitted for Review</h3>
+      <p class="text-soft">നിങ്ങളുടെ വിവരങ്ങൾ അഡ്മിൻ പരിശോധിച്ച ശേഷം ഡയറക്ടറിയിൽ പ്രസിദ്ധീകരിക്കും.<br>
+      An admin will review your details and publish them to the public directory shortly.</p>
+      <a href="directory.html" class="btn btn-outline mt-12">Browse Directory</a>
+      <a href="list-business.html" class="btn btn-primary mt-8" onclick="location.reload();return false;">Submit Another</a>
+    </div>
+
+    <p class="text-soft center mt-16" style="font-size:12px;">
+      Running an established business and want a homepage ad slot, priority directory placement &amp; access to candidate resumes?
+      <br><a href="membership.html" style="color:var(--brand); font-weight:700;">Explore Chamber of Commerce Membership (Paid) →</a>
+    </p>
+  </div>
+</main>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+renderChrome('listbiz');
+const db = getDB();
+db.categories.forEach(c=>{
+  document.getElementById('l_cat').insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.icon} ${c.label}${c.sub ? ` (${c.sub})` : ''}</option>`);
+});
+
+async function sendListing(){
+  const name = document.getElementById('l_name').value.trim();
+  const phone = document.getElementById('l_phone').value.trim();
+  const details = document.getElementById('l_details').value.trim();
+  const city = document.getElementById('l_city').value.trim();
+  const address = document.getElementById('l_address').value.trim();
+  const landmark = document.getElementById('l_landmark').value.trim();
+  const postal = document.getElementById('l_postal').value.trim();
+  const locationParts = [city || 'Tirur'];
+  if(address) locationParts.push(address);
+  if(landmark) locationParts.push(`Landmark: ${landmark}`);
+  if(postal) locationParts.push(`PIN: ${postal}`);
+  const location = locationParts.join(' — ');
+  const category = document.getElementById('l_cat').value;
+
+  if(!name || !phone || !details || !city || !address || !postal){
+    toast("പേര്, ഫോൺ, വിലാസം, PIN എന്നിവ നൽകുക (Please fill name, phone, address & postal code)");
+    return;
+  }
+  if(!/^[0-9+\s-]{10,15}$/.test(phone)){
+    toast("Please enter a valid 10-digit mobile number");
+    return;
+  }
+  if(!/^\d{6}$/.test(postal)){
+    toast("Please enter a valid 6-digit postal code");
+    return;
+  }
+
+  if(!getAuthToken()){
+    window.location.href = 'login.html';
+    return;
+  }
+
+  try{
+    await apiRequest('/businesses', {
+      method: 'POST',
+      body: JSON.stringify({ name, phone, category, description: details, address: location, hours: 'Not specified', open: true })
+    });
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('successView').style.display = 'block';
+    toast("✅ Sent for admin review!");
+  }catch(error){
+    toast(error.status === 403 ? 'Only an authenticated Shop Owner can submit a business.' : 'Unable to submit this business. Please try again.');
+  }
+}
+</script>
+</body>
+</html>

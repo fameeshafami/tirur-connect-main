@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Member Verification &mdash; Tirur Connect</title></head>
+<body><script>
+const code = new URLSearchParams(location.search).get('code');
+const target = code ? `chamber-member-profile.html?publicId=${encodeURIComponent(code)}` : 'chamber-member-profile.html';
+location.replace(target);
+</script></body></html>

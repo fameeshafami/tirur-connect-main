@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chamber Member Dashboard &mdash; Tirur Connect</title><link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg"><link rel="stylesheet" href="css/style.css"></head>
+<body><div data-chrome="topbar" class="topbar"></div><header data-chrome="header" class="site-header"></header><div data-chrome="mobilemenu" class="mobile-menu"></div>
+<div id="guardScreen" style="display:none;"><div class="container" style="max-width:420px; padding-top:60px; text-align:center;"><div style="font-size:40px;">&#127941;</div><h2>Chamber Member Access</h2><p class="text-soft">Please sign in with an active Chamber Member account.</p><a href="login.html" class="btn btn-primary mt-12">Go to Login</a></div></div>
+<div id="dashboardScreen" style="display:none;"><div class="container" style="padding-top:16px;"><h1 style="font-size:19px;">Chamber Member Dashboard</h1><p class="text-soft">Manage your verified Chamber membership and QR profile.</p></div>
+<div class="admin-shell container"><aside class="admin-sidebar"><a data-panel="dashboard" class="active">Dashboard</a><a data-panel="membership">My Membership</a><a data-panel="profile">Business Profile</a><a data-panel="qr">My QR ID Card</a><a data-panel="all-members">All Chamber Members</a><a data-panel="status">Membership Status</a><a data-panel="documents">Documents</a><a data-panel="notifications">Notifications</a><a data-panel="settings">Settings</a><a href="#" onclick="logout()">Logout</a></aside>
+<div class="admin-main"><div class="admin-tabs"><button data-panel="dashboard" class="active">Dashboard</button><button data-panel="membership">Membership</button><button data-panel="profile">Business Profile</button><button data-panel="qr">My QR Card</button><button data-panel="all-members">All Members</button><button data-panel="status">Status</button><button data-panel="documents">Documents</button><button data-panel="notifications">Notifications</button><button data-panel="settings">Settings</button></div>
+<div class="admin-panel active" id="panel-dashboard"><div class="stat-grid" id="statGrid"></div><div class="card mt-16" id="dashboardSummary"></div></div>
+<div class="admin-panel" id="panel-membership"><div class="card" id="membershipDetails"></div></div>
+<div class="admin-panel" id="panel-profile"><div class="form-card"><h3 style="font-size:14.5px;">Business Profile</h3><div id="profileForm"></div></div></div>
+<div class="admin-panel" id="panel-qr"><div class="card" id="qrPanel"></div></div>
+<div class="admin-panel" id="panel-all-members">
+  <div class="card">
+    <div class="flex-between" style="margin-bottom:12px;">
+      <h3 style="font-size:14.5px;">🏅 All Active Chamber Members</h3>
+      <button class="btn btn-outline btn-sm" onclick="loadAllMembers()">↻ Refresh</button>
+    </div>
+    <p class="text-soft" style="font-size:12.5px; margin-bottom:14px;">All verified Chamber of Commerce members. Click any member's profile to verify their QR identity.</p>
+    <div id="allMembersGrid" class="members-grid"></div>
+  </div>
+</div>
+<div class="admin-panel" id="panel-status"><div class="card" id="statusPanel"></div></div>
+<div class="admin-panel" id="panel-documents"><div class="card"><h3 style="font-size:14.5px;">Uploaded Candidate CVs</h3><div id="chamberResumes"></div></div></div>
+<div class="admin-panel" id="panel-notifications"><div class="card" id="notificationsPanel"></div></div>
+<div class="admin-panel" id="panel-settings"><div class="form-card"><h3 style="font-size:14.5px;">Account Settings</h3><div id="settingsForm"></div></div></div>
+</div></div></div>
+<footer data-chrome="footer" class="site-footer"></footer><nav data-chrome="tabbar" class="tabbar"></nav>
+<script src="js/app.js"></script><script>
+renderChrome('chamber-member');
+const state = { user:null, membership:null, qr:null, notifications:[] };
+const esc = value => value === undefined || value === null || value === '' ? '&mdash;' : String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+const dateValue = value => value ? new Date(value).toLocaleDateString('en-IN') : '&mdash;';
+const request = (path, options={}) => apiRequest(`/chamber-member${path}`, options);
+function switchPanel(name){document.querySelectorAll('.admin-panel').forEach(panel=>panel.classList.toggle('active', panel.id === `panel-${name}`));document.querySelectorAll('.admin-sidebar a[data-panel],.admin-tabs button').forEach(item=>item.classList.toggle('active',item.dataset.panel===name));}
+document.querySelectorAll('.admin-sidebar a[data-panel],.admin-tabs button').forEach(item=>item.addEventListener('click',()=>switchPanel(item.dataset.panel)));
+function renderDashboard(){
+  const m=state.membership;
+  const cards=[{label:'Membership Number',value:m?.membershipNumber||'Pending'},{label:'Membership Status',value:m?.status||'No membership'},{label:'QR Code',value:state.qr?'Active':'Unavailable'},{label:'Notifications',value:state.notifications.filter(note=>!note.readAt).length}];
+  document.getElementById('statGrid').innerHTML=cards.map(card=>`<div class="stat-card"><div class="label">${esc(card.label)}</div><div class="value" style="font-size:18px;">${esc(card.value)}</div></div>`).join('');
+  document.getElementById('dashboardSummary').innerHTML=m?`<h3 style="font-size:14.5px;">Membership Overview</h3><p><strong>${esc(m.businessName)}</strong></p><p class="text-soft">Owner: ${esc(m.ownerName)}<br>Valid until: ${dateValue(m.membershipExpiryDate)}</p>`:'<h3 style="font-size:14.5px;">Membership Overview</h3><p class="text-soft">No Chamber Membership record is available.</p>';
+}
+function renderMembership(){
+  const m=state.membership; document.getElementById('membershipDetails').innerHTML=!m?'<p class="text-soft">No membership record found.</p>':`<h3 style="font-size:14.5px;">My Membership</h3><p><strong>Business:</strong> ${esc(m.businessName)}</p><p><strong>Membership No.:</strong> ${esc(m.membershipNumber)}</p><p><strong>Status:</strong> ${esc(m.status).toUpperCase()}</p><p><strong>Start date:</strong> ${dateValue(m.membershipStartDate)}</p><p><strong>Expiry date:</strong> ${dateValue(m.membershipExpiryDate)}</p>`;
+}
+function renderProfile(){
+  const m=state.membership||{}; document.getElementById('profileForm').innerHTML=`<div class="grid cols-2"><div class="form-group"><label>Business Name</label><input id="businessName" value="${esc(m.businessName)}"></div><div class="form-group"><label>Owner Name</label><input id="ownerName" value="${esc(m.ownerName)}"></div><div class="form-group"><label>Phone</label><input id="memberPhone" value="${esc(m.phone)}"></div><div class="form-group"><label>Email</label><input id="memberEmail" type="email" value="${esc(m.email)}"></div><div class="form-group"><label>Business Category</label><input id="memberCategory" value="${esc(m.category)}"></div><div class="form-group"><label>Website</label><input id="memberWebsite" value="${esc(m.website)}"></div><div class="form-group" style="grid-column:1 / -1;"><label>Business Address</label><textarea id="memberAddress">${esc(m.address)}</textarea></div><div class="form-group" style="grid-column:1 / -1;"><label>Business Description</label><textarea id="memberDescription">${esc(m.description)}</textarea></div><div class="form-group" style="grid-column:1 / -1;"><label>Logo URL</label><input id="memberLogo" value="${esc(m.logo)}"></div></div><button class="btn btn-primary mt-12" onclick="saveMembershipProfile()">Save Profile</button>`;
+}
+async function saveMembershipProfile(){const payload={businessName:document.getElementById('businessName').value.trim(),ownerName:document.getElementById('ownerName').value.trim(),phone:document.getElementById('memberPhone').value.trim(),email:document.getElementById('memberEmail').value.trim(),category:document.getElementById('memberCategory').value.trim(),website:document.getElementById('memberWebsite').value.trim(),address:document.getElementById('memberAddress').value.trim(),description:document.getElementById('memberDescription').value.trim(),logo:document.getElementById('memberLogo').value.trim()};try{state.membership=(await request('/membership',{method:'PATCH',body:JSON.stringify(payload)})).membership;toast('Business profile updated.');renderAll();}catch(error){toast(error.message||'Unable to update profile.');}}
+function buildPublicUrl(publicId){ return `${window.location.origin}/chamber-member-profile.html?publicId=${encodeURIComponent(publicId)}`; }
+function renderQr(){
+  const panel = document.getElementById('qrPanel');
+  const qr = state.qr;
+  const m = state.membership;
+  if(!qr || !m){
+    panel.innerHTML = '<h3 style="font-size:14.5px;">🪪 My QR ID Card</h3><div class="empty-state"><div class="ic">🔲</div><p>Your QR ID card is only available when your membership is active and verified.</p></div>';
+    return;
+  }
+  const publicUrl = qr.publicUrl || buildPublicUrl(qr.publicId);
+  const imgSrc = qr.imageDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=1&data=${encodeURIComponent(publicUrl)}`;
+  const expiryDate = m.membershipExpiryDate ? new Date(m.membershipExpiryDate).toLocaleDateString('en-IN') : '—';
+  panel.innerHTML = `
+    <h3 style="font-size:14.5px; margin-bottom:14px;">🪪 My QR ID Card</h3>
+    <div class="id-card">
+      <div class="id-card-header">
+        <span class="org-name">🏅 TIRUR CHAMBER OF COMMERCE</span>
+        <span class="tag-badge">VERIFIED MEMBER</span>
+      </div>
+      <div class="id-card-body">
+        <div class="id-card-qr"><img src="${imgSrc}" alt="Chamber Member QR code"></div>
+        <div class="id-card-info">
+          <div class="biz-name">${esc(m.businessName)}</div>
+          <div class="biz-cat">${esc(m.category)}</div>
+          <div class="detail-row"><b>Owner:</b> ${esc(m.ownerName)}</div>
+          <div class="detail-row"><b>Phone:</b> ${esc(m.phone)}</div>
+          <div class="detail-row"><b>Plan:</b> ${esc(m.plan)}</div>
+        </div>
+      </div>
+      <div class="id-card-footer">
+        <div>
+          <div class="member-num">${esc(qr.membershipNumber || m.membershipNumber || 'Pending')}</div>
+          <div class="valid-till">Valid until ${expiryDate}</div>
+        </div>
+        <div class="verified-chip">✓ Active QR</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+      <a class="btn btn-outline btn-sm" href="${publicUrl}" target="_blank" rel="noopener">View Public Profile</a>
+      <button class="btn btn-primary btn-sm" onclick="downloadQr()">Download QR</button>
+    </div>
+    <p class="text-soft" style="margin-top:12px; font-size:12px;">Scan this QR code to verify your Chamber membership. Share it with customers or display it at your business.</p>`;
+}
+function downloadQr(){
+  if(!state.qr) return;
+  const imgSrc = state.qr.imageDataUrl;
+  if(!imgSrc){ toast('QR image not yet loaded.'); return; }
+  const link = document.createElement('a');
+  link.href = imgSrc;
+  link.download = `${state.qr.membershipNumber || 'tirur-chamber'}-qr.png`;
+  link.click();
+}
+function renderStatus(){const m=state.membership;document.getElementById('statusPanel').innerHTML=!m?'<p class="text-soft">Membership not found.</p>':`<div class="flex-between"><h3 style="font-size:14.5px;">Membership Status</h3><button class="btn btn-outline btn-sm" type="button" onclick="refreshLiveStatus()">↻ Refresh</button></div><p><span class="status ${m.status==='active'?'active':'pending'}">${esc(m.status).toUpperCase()}</span></p><p class="text-soft">${m.status==='active'?'Your public Chamber verification is active.':'Your membership is not currently verified for public QR display.'}</p><p class="text-soft" style="font-size:11px;margin-bottom:0;">Last checked: ${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</p>`;}
+async function refreshLiveStatus(){try{const [membership,qr]=await Promise.all([request('/membership'),request('/qr')]);state.membership=membership.membership;state.qr=qr.qr;renderDashboard();renderMembership();renderQr();renderStatus();toast('Membership status refreshed.');}catch(error){toast(error.message||'Unable to refresh membership status.');}}
+function renderNotifications(){
+  const notes = state.notifications || [];
+  const unread = notes.filter(n => !n.readAt);
+  function cmNotifLink(n) {
+    const type = n.type || '';
+    if (type.includes('membership') || type.includes('approved') || type.includes('expired') || type.includes('suspended')) return 'membership';
+    if (type.includes('qr')) return 'qr';
+    return null;
+  }
+  document.getElementById('notificationsPanel').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:14.5px;margin:0;">🔔 Notifications ${unread.length ? `<span style="background:#fdeaea;color:#b91c1c;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle;">${unread.length} new</span>` : ''}</h3>
+    </div>
+    ${!notes.length ? '<div class="empty-state"><div class="ic">🔔</div><p>No notifications yet.</p></div>' :
+    notes.map(n => {
+      const link = cmNotifLink(n);
+      const icon = n.readAt ? '📭' : (
+        (n.type||'').includes('approved') ? '✅' :
+        (n.type||'').includes('expir') ? '⏰' :
+        (n.type||'').includes('suspended') ? '⚠️' :
+        (n.type||'').includes('rejected') ? '❌' : '🎖️'
+      );
+      return `
+      <div onclick="${link ? `switchPanel('${link}')` : ''}"
+        style="display:flex;gap:12px;align-items:flex-start;padding:13px 14px;border-radius:12px;margin-bottom:8px;background:${n.readAt?'#fafafa':'#fff'};border:1.5px solid ${n.readAt?'#f0f0f0':'#c8ead9'};${n.readAt?'opacity:.7;':''}${link?'cursor:pointer;':''}transition:.15s ease;"
+        ${link ? `onmouseover="this.style.borderColor='#0f6e51';this.style.background='#f0faf5';" onmouseout="this.style.borderColor='${n.readAt?'#f0f0f0':'#c8ead9'}';this.style.background='${n.readAt?'#fafafa':'#fff'}';"` : ''}
+      >
+        <div style="width:38px;height:38px;border-radius:10px;flex-shrink:0;background:${n.readAt?'#f5f5f5':'linear-gradient(135deg,#e6f4ef,#c8ead9)'};display:flex;align-items:center;justify-content:center;font-size:18px;">${icon}</div>
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:13px;margin:0 0 4px;line-height:1.4;${!n.readAt?'font-weight:700;color:#1a2420;':'color:#5b6b64;'}">${esc(n.message || n.type)}</p>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:#8fa89e;">${dateValue(n.createdAt)}</span>
+            ${link ? `<span style="font-size:10.5px;color:#0f6e51;font-weight:700;">Tap to view →</span>` : ''}
+          </div>
+        </div>
+        <div style="flex-shrink:0;">
+          ${!n.readAt ? `<button onclick="event.stopPropagation();readNotification('${n._id}')" style="background:#f0faf5;border:1px solid #c8ead9;color:#0a4f3a;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Mark Read</button>` : `<span style="font-size:10px;color:#8fa89e;">✓ Read</span>`}
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+function renderSettings(){const u=state.user||{};document.getElementById('settingsForm').innerHTML=`<div class="grid cols-2"><div class="form-group"><label>Name</label><input id="accountName" value="${esc(u.name)}"></div><div class="form-group"><label>Phone</label><input id="accountPhone" value="${esc(u.phone)}"></div><div class="form-group" style="grid-column:1 / -1;"><label>Email</label><input id="accountEmail" type="email" value="${esc(u.email)}"></div></div><button class="btn btn-primary mt-12" onclick="saveSettings()">Save Settings</button>`;}
+async function saveSettings(){try{const result=await request('/profile',{method:'PATCH',body:JSON.stringify({name:document.getElementById('accountName').value.trim(),phone:document.getElementById('accountPhone').value.trim(),email:document.getElementById('accountEmail').value.trim()})});state.user=result.user;saveAuthSession(getAuthToken(),result.user);toast('Settings updated.');renderSettings();}catch(error){toast(error.message||'Unable to update settings.');}}
+function renderAll(){renderDashboard();renderMembership();renderProfile();renderQr();renderStatus();renderNotifications();renderSettings();renderResumeDirectory('chamberResumes');}
+async function loadAllMembers(){
+  const grid = document.getElementById('allMembersGrid');
+  if(!grid) return;
+  grid.innerHTML = '<p class="text-soft">Loading members&hellip;</p>';
+  try{
+    const result = await request('/all-active-members');
+    const members = result.members || [];
+    if(!members.length){
+      grid.innerHTML = '<div class="empty-state"><div class="ic">🏅</div><p>No active Chamber Members found.</p></div>';
+      return;
+    }
+    grid.innerHTML = members.map(m => {
+      const publicId = m.qrCode || '';
+      const profileUrl = publicId ? `chamber-member-profile.html?publicId=${encodeURIComponent(publicId)}` : '';
+      const expiryDate = m.membershipExpiryDate ? new Date(m.membershipExpiryDate).toLocaleDateString('en-IN') : '—';
+      const qrImgSrc = publicId ? `https://api.qrserver.com/v1/create-qr-code/?size=100x100&margin=1&data=${encodeURIComponent(window.location.origin + '/chamber-member-profile.html?publicId=' + encodeURIComponent(publicId))}` : '';
+      const isOwnCard = state.membership && state.membership.membershipNumber && m.membershipNumber === state.membership.membershipNumber;
+      return `
+        <div class="member-card${isOwnCard ? '" style="border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-light)' : ''}">
+          <div class="member-card-top">
+            <div class="member-card-icon">${m.logo ? `<img src="${esc(m.logo)}" alt="" style="width:42px;height:42px;border-radius:10px;object-fit:cover;">` : '🏪'}</div>
+            <div style="min-width:0;">
+              <h4>${esc(m.businessName)}${isOwnCard ? ' <span style="font-size:10px;background:var(--brand);color:#fff;padding:1px 7px;border-radius:20px;vertical-align:middle;">YOU</span>' : ''}</h4>
+              <div class="cat">${esc(m.category || '—')}</div>
+            </div>
+          </div>
+          <div class="meta">
+            <span>👤 <b>${esc(m.ownerName)}</b></span>
+            ${m.phone ? `<span>📞 <b>${esc(m.phone)}</b></span>` : ''}
+          </div>
+          <div class="meta">
+            <span>🎫 <b>${esc(m.membershipNumber || 'Active')}</b></span>
+            <span>📅 Until <b>${expiryDate}</b></span>
+          </div>
+          ${qrImgSrc ? `<div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><img src="${esc(qrImgSrc)}" alt="QR" style="width:54px;height:54px;border:1px solid var(--border);border-radius:8px;padding:3px;background:#fff;"><span class="text-soft" style="font-size:11px;">Scan to verify identity</span></div>` : ''}
+          <div class="member-card-actions">
+            ${profileUrl ? `<a class="btn btn-outline btn-sm" href="${esc(profileUrl)}" target="_blank" rel="noopener">View Profile</a>` : ''}
+            ${m.website ? `<a class="btn btn-outline btn-sm" href="${esc(m.website)}" target="_blank" rel="noopener">Website</a>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }catch(error){
+    grid.innerHTML = '<p class="text-soft">Unable to load members. Please try again.</p>';
+  }
+}
+async function loadData(){
+  try {
+    const [profile, membership, qr, notifications] = await Promise.all([
+      request('/profile'),
+      request('/membership'),
+      request('/qr'),
+      request('/notifications'),
+    ]);
+    state.user = profile.user;
+    state.membership = membership.membership;
+    state.qr = qr.qr;
+    state.notifications = notifications.data || [];
+    renderAll();
+    loadAllMembers();
+  } catch(error) {
+    console.error('loadData error:', error);
+    toast(error.message || 'Unable to load Chamber Member information.');
+  }
+}
+async function verifyAccess(){
+  const token = getAuthToken();
+  if(!token){ location.href = 'login.html'; return; }
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, { headers:{ Authorization:`Bearer ${token}` } });
+    const data = await response.json().catch(()=>({}));
+    if(!response.ok || !data.user || data.user.role !== 'chamber_member' || data.user.status !== 'active'){
+      // Don't clear session — just show guard screen so user can navigate elsewhere
+      document.getElementById('guardScreen').style.display = 'block';
+      return;
+    }
+    state.user = data.user;
+    saveAuthSession(token, data.user);
+    document.getElementById('dashboardScreen').style.display = 'block';
+    loadData();
+  } catch(error) {
+    document.getElementById('guardScreen').style.display = 'block';
+  }
+}
+verifyAccess();
+setInterval(() => {
+  if (document.visibilityState === 'visible' && state.user) refreshLiveStatus();
+}, 30000);
+</script></body></html>

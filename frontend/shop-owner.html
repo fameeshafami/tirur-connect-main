@@ -1,0 +1,1177 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop Owner Dashboard — Tirur Connect</title>
+<link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<div id="guardScreen" style="display:none;">
+  <div class="container" style="max-width:420px; padding-top:60px; text-align:center;">
+    <div style="font-size:40px;">🏪</div>
+    <h2>Shop Owner Access</h2>
+    <p class="text-soft">Please sign in with a valid Shop Owner account.</p>
+    <a href="login.html" class="btn btn-primary mt-12">Go to Login</a>
+  </div>
+</div>
+
+<div id="dashboardScreen" style="display:none;">
+  <div class="container" style="padding-top:16px;">
+    <h1 style="font-size:19px;">Shop Owner Dashboard</h1>
+    <p class="text-soft">Manage your business profile, jobs, applicants, and chamber membership.</p>
+  </div>
+
+  <div class="admin-shell container">
+    <aside class="admin-sidebar">
+      <a data-panel="overview" class="active">📊 Overview</a>
+      <a data-panel="profile">👤 Profile</a>
+      <a data-panel="business">🏪 My Business</a>
+      <a data-panel="jobs">💼 Jobs</a>
+      <a data-panel="applications">📄 Applicants</a>
+      <a data-panel="resumes">📄 Candidate CVs</a>
+      <a data-panel="membership">🎖️ Chamber</a>
+      <a data-panel="qr">📲 QR</a>
+      <a data-panel="notifications">🔔 Alerts</a>
+    </aside>
+
+    <div class="admin-main">
+      <div class="admin-tabs">
+        <button data-panel="overview" class="active">Overview</button>
+        <button data-panel="profile">Profile</button>
+        <button data-panel="business">Business</button>
+        <button data-panel="jobs">Jobs</button>
+        <button data-panel="applications">Applicants</button>
+        <button data-panel="resumes">Candidate CVs</button>
+        <button data-panel="membership">Chamber</button>
+        <button data-panel="qr">QR</button>
+        <button data-panel="notifications">Alerts</button>
+      </div>
+
+      <div class="admin-panel active" id="panel-overview">
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="card mt-16">
+          <h3 style="font-size:14.5px;">Quick Summary</h3>
+          <div id="dashboardSummary"></div>
+        </div>
+
+        <div class="card mt-16" style="border-left:4px solid var(--brand);">
+          <div class="flex-between" style="gap:12px;align-items:flex-start;">
+            <div>
+              <h3 style="font-size:15px;margin-bottom:4px;">📄 Uploaded Candidate CVs</h3>
+              <p class="text-soft" style="margin:0;">Discover active Job Seekers who have shared their CV.</p>
+            </div>
+            <span class="tag" style="white-space:nowrap;">MEMBERS ONLY</span>
+          </div>
+          <div id="overviewResumes" class="mt-8"><p class="text-soft">Loading candidate profiles...</p></div>
+        </div>
+
+        <div class="career-callout mt-16">
+          <div>
+            <b>📋 Post a Job Vacancy</b>
+            <span>List an opening from your business — visible to local job seekers after admin approval.</span>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openJobVacancyModal()">Upload Job Vacancy</button>
+        </div>
+
+        <div class="filter-bar mt-16">
+          <input id="overviewJobSearch" placeholder="Search job title or company…">
+          <select id="overviewTypeFilter">
+            <option value="">All Types</option>
+            <option>Full-time</option>
+            <option>Part-time</option>
+          </select>
+        </div>
+
+        <div class="two-col mt-16">
+          <div class="grid" id="overviewJobGrid"></div>
+          <aside class="hide-mobile">
+            <div class="card" id="overviewMembershipAside">
+              <h3 style="font-size:14.5px;">🔒 Candidate Resumes</h3>
+              <p class="text-soft">Candidate contact details and resumes are available to businesses with an <b>active, paid Chamber Membership</b>.</p>
+              <a href="membership.html" class="btn btn-accent btn-block mt-8">Become a Chamber Member</a>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-profile">
+        <div class="form-card">
+          <h3 style="font-size:14.5px;">My Profile</h3>
+          <div id="profileForm"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-business">
+        <div class="form-card">
+          <h3 style="font-size:14.5px;">Business Profile</h3>
+          <div id="businessForm"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-jobs">
+        <div class="form-card">
+          <h3 style="font-size:14.5px;">Post a Job</h3>
+          <div id="jobForm"></div>
+          <div class="mt-16">
+            <h4 style="font-size:14px;">My Jobs</h4>
+            <div id="jobsList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-applications">
+        <div class="card">
+          <h3 style="font-size:14.5px;">Job Applicants</h3>
+          <div id="applicationsList"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-resumes"><div class="card"><h3 style="font-size:14.5px;">Candidate CVs</h3><div id="shopOwnerResumes"></div></div></div>
+
+      <div class="admin-panel" id="panel-membership">
+        <div class="form-card">
+          <h3 style="font-size:14.5px;">Chamber Membership</h3>
+          <div id="membershipStatus"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-qr">
+        <div class="card">
+          <h3 style="font-size:14.5px;">QR Access</h3>
+          <div id="qrStatus"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-notifications">
+        <div class="card">
+          <h3 style="font-size:14.5px;">Notifications</h3>
+          <div id="notificationsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="candidateModal" class="modal-bg" role="dialog" aria-modal="true" aria-labelledby="candidateModalTitle">
+  <div class="modal-box">
+    <div class="modal-close"><button class="btn btn-outline btn-sm" type="button" onclick="closeCandidateModal()">Close</button></div>
+    <h2 id="candidateModalTitle" style="font-size:18px;">Candidate Details</h2>
+    <div id="candidateDetails" class="mt-12"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="jobModalBg"><div class="modal-box" id="jobModalBox"></div></div>
+<div class="modal-bg" id="careerModalBg"><div class="modal-box" id="careerModalBox"></div></div>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+renderChrome('shop-owner');
+
+const apiBase = `${API_BASE_URL}/shop-owner`;
+const state = {
+  user: null,
+  business: null,
+  dashboard: null,
+  jobs: [],
+  applications: [],
+  membership: null,
+  qr: null,
+  notifications: []
+};
+let overviewQuery = '';
+let overviewTypeFilter = '';
+
+async function apiCall(path, options = {}) {
+  const token = getAuthToken();
+  const headers = { ...(options.headers || {}) };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+  const response = await fetch(`${apiBase}${path}`, { ...options, headers });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Request failed.');
+  return data;
+}
+
+async function verifyOwnerAccess() {
+  const token = getAuthToken();
+  if (!token) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  try {
+    const me = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await me.json().catch(() => ({}));
+
+    if (!me.ok || !data.user || !['shop_owner','chamber_member'].includes(data.user.role) || data.user.status === 'suspended' || data.user.status === 'rejected') {
+
+      document.getElementById('guardScreen').style.display = 'block';
+      return;
+    }
+
+    state.user = data.user;
+    saveAuthSession(token, data.user);
+    document.getElementById('dashboardScreen').style.display = 'block';
+    initDashboard();
+  } catch (error) {
+
+    document.getElementById('guardScreen').style.display = 'block';
+  }
+}
+
+function switchPanel(name){
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  document.querySelectorAll('.admin-sidebar a, .admin-tabs button').forEach(el => el.classList.toggle('active', el.dataset.panel === name));
+}
+document.querySelectorAll('.admin-sidebar a, .admin-tabs button').forEach(el => {
+  el.addEventListener('click', () => switchPanel(el.dataset.panel));
+});
+
+function renderStatGrid(){
+  const d = state.dashboard || {};
+  const cards = [
+    { label: 'Businesses',    value: d.businesses ?? 0,              icon: '🏪', panel: 'business' },
+    { label: 'Total Jobs',    value: d.jobs?.total ?? 0,             icon: '💼', panel: 'jobs' },
+    { label: 'Applications',  value: d.applications ?? 0,            icon: '📝', panel: 'applications' },
+    { label: 'Shortlisted',   value: d.shortlisted ?? 0,             icon: '⭐', panel: 'applications' },
+    { label: 'Notifications', value: d.notifications ?? 0,           icon: '🔔', panel: 'notifications' },
+  ];
+  document.getElementById('statGrid').innerHTML = cards.map(c => `
+    <button class="stat-card" type="button" onclick="switchPanel('${c.panel}')" title="Go to ${c.label}" style="cursor:pointer; text-align:left; width:100%; border:none;">
+      <div style="font-size:22px; margin-bottom:4px;">${c.icon}</div>
+      <div class="num">${c.value}</div>
+      <div class="lbl">${c.label}</div>
+    </button>`).join('');
+}
+
+function renderProfileForm(){
+  const user = state.user || getSession();
+  document.getElementById('profileForm').innerHTML = `
+    <div class="grid cols-2">
+      <div class="form-group">
+        <label>Name</label>
+        <input id="profileName" value="${user?.name || ''}">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="profileEmail" type="email" value="${user?.email || ''}">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input id="profilePhone" value="${user?.phone || ''}">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <input value="${user?.role || ''}" readonly>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-12" onclick="saveProfile()">Save Profile</button>
+    <div class="mt-16">
+      <h4>Change Password</h4>
+      <div class="grid cols-2">
+        <div class="form-group"><label>Current Password</label><input id="currentPassword" type="password" autocomplete="current-password"></div>
+        <div class="form-group"><label>New Password</label><input id="newPassword" type="password" minlength="8" autocomplete="new-password"></div>
+      </div>
+      <button class="btn btn-outline mt-12" onclick="changePassword()">Update Password</button>
+    </div>
+  `;
+}
+
+async function changePassword(){
+  const currentPassword = document.getElementById('currentPassword').value;
+  const newPassword = document.getElementById('newPassword').value;
+  if(!currentPassword || !newPassword) return toast('Enter your current and new password.');
+  if(newPassword.length < 8) return toast('New password must be at least 8 characters long.');
+  try{ const response = await fetch(`${API_BASE_URL}/auth/password`, { method:'PATCH', headers:{'Content-Type':'application/json', Authorization:`Bearer ${getAuthToken()}`}, body:JSON.stringify({ currentPassword, newPassword }) }); const data = await response.json().catch(()=>({})); if(!response.ok) throw new Error(data.message || 'Unable to update password.'); document.getElementById('currentPassword').value=''; document.getElementById('newPassword').value=''; toast(data.message || 'Password updated.'); }
+  catch(error){ toast(error.message || 'Unable to update password.'); }
+}
+
+async function saveProfile(){
+  const payload = {
+    name: document.getElementById('profileName').value.trim(),
+    email: document.getElementById('profileEmail').value.trim(),
+    phone: document.getElementById('profilePhone').value.trim()
+  };
+  const result = await apiCall('/profile', { method: 'PATCH', body: JSON.stringify(payload) });
+  state.user = result.user;
+  saveAuthSession(getAuthToken(), result.user);
+  renderProfileForm();
+  toast('Profile updated');
+}
+
+function renderBusinessForm(){
+  const business = state.business || {};
+  document.getElementById('businessForm').innerHTML = `
+    <div class="grid cols-2">
+      <div class="form-group"><label>Business Name</label><input id="bName" value="${business.name || ''}"></div>
+      <div class="form-group"><label>Category</label><input id="bCategory" value="${business.category || ''}"></div>
+      <div class="form-group" style="grid-column:1 / -1;"><label>Description</label><textarea id="bDescription">${business.description || ''}</textarea></div>
+      <div class="form-group"><label>Phone</label><input id="bPhone" value="${business.phone || ''}"></div>
+      <div class="form-group"><label>Email</label><input id="bEmail" type="email" value="${business.email || ''}"></div>
+      <div class="form-group" style="grid-column:1 / -1;"><label>Address</label><textarea id="bAddress">${business.address || ''}</textarea></div>
+      <div class="form-group"><label>Website</label><input id="bWebsite" value="${business.website || ''}"></div>
+      <div class="form-group"><label>Status</label><input value="${business.status || 'Not created'}" readonly></div>
+    </div>
+    <div class="mt-12">
+      <button class="btn btn-primary" onclick="saveBusiness()">Save Business</button>
+      ${business && business._id ? `<button class="btn btn-outline" onclick="deleteBusiness('${business._id}')">Delete</button>` : ''}
+    </div>
+  `;
+}
+
+async function saveBusiness(){
+  const payload = {
+    name: document.getElementById('bName').value.trim(),
+    category: document.getElementById('bCategory').value.trim(),
+    description: document.getElementById('bDescription').value.trim(),
+    phone: document.getElementById('bPhone').value.trim(),
+    email: document.getElementById('bEmail').value.trim(),
+    address: document.getElementById('bAddress').value.trim(),
+    website: document.getElementById('bWebsite').value.trim()
+  };
+
+  if (state.business && state.business._id) {
+    await apiCall(`/business/${state.business._id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    toast('Business updated');
+  } else {
+    await apiCall('/business', { method: 'POST', body: JSON.stringify(payload) });
+    toast('Business created');
+  }
+  await loadOwnerData();
+}
+
+async function deleteBusiness(id){
+  if (!confirm('Delete this business profile?')) return;
+  await apiCall(`/business/${id}`, { method: 'DELETE' });
+  toast('Business deleted');
+  await loadOwnerData();
+}
+
+function renderJobForm(){
+  document.getElementById('jobForm').innerHTML = `
+    <div class="grid cols-2">
+      <div class="form-group"><label>Title</label><input id="jobTitle"></div>
+      <div class="form-group"><label>Location</label><input id="jobLocation"></div>
+      <div class="form-group"><label>Employment Type</label><select id="jobType"><option value="Full-time">Full-time</option><option value="Part-time">Part-time</option><option value="Contract">Contract</option><option value="Internship">Internship</option></select></div>
+      <div class="form-group"><label>Category</label><input id="jobCategory"></div>
+      <div class="form-group" style="grid-column:1 / -1;"><label>Description</label><textarea id="jobDescription"></textarea></div>
+      <div class="form-group"><label>Requirements</label><textarea id="jobRequirements"></textarea></div>
+      <div class="form-group"><label>Skills</label><input id="jobSkills" placeholder="comma separated skills"></div>
+      <div class="form-group"><label>Salary</label><input id="jobSalary"></div>
+      <div class="form-group"><label>Number of Vacancies</label><input id="jobQuantity" type="number" min="1" value="1"></div>
+      <div class="form-group"><label>Experience</label><input id="jobExperience"></div>
+      <div class="form-group"><label>Education</label><input id="jobEducation"></div>
+      <div class="form-group"><label>Application Method</label><select id="jobApplicationMethod"><option value="tirur_connect">Apply through Tirur Connect</option><option value="external">External application</option></select></div>
+      <div class="form-group"><label>Application Link</label><input id="jobApplicationLink" type="url" placeholder="Required for external applications"></div>
+      <div class="form-group"><label>Closing Date</label><input id="jobClosing" type="date"></div>
+    </div>
+    <button class="btn btn-primary mt-12" onclick="createJob()">Submit for Admin Approval</button>
+  `;
+}
+
+async function createJob(){
+  const payload = {
+    title: document.getElementById('jobTitle').value.trim(),
+    description: document.getElementById('jobDescription').value.trim(),
+    location: document.getElementById('jobLocation').value.trim(),
+    employmentType: document.getElementById('jobType').value,
+    category: document.getElementById('jobCategory').value.trim(),
+    requirements: document.getElementById('jobRequirements').value.trim(),
+    skills: document.getElementById('jobSkills').value.split(',').map(s => s.trim()).filter(Boolean),
+    salary: document.getElementById('jobSalary').value.trim(),
+    quantity: Number(document.getElementById('jobQuantity').value || 1),
+    experience: document.getElementById('jobExperience').value.trim(),
+    education: document.getElementById('jobEducation').value.trim(),
+    applicationMethod: document.getElementById('jobApplicationMethod').value,
+    applicationLink: document.getElementById('jobApplicationLink').value.trim(),
+    closingDate: document.getElementById('jobClosing').value || undefined
+  };
+  try {
+    await apiCall('/jobs', { method: 'POST', body: JSON.stringify(payload) });
+    toast('Job submitted successfully. Waiting for Admin approval.');
+    renderJobForm();
+    await loadOwnerData();
+  } catch (error) {
+    toast(error.message || 'Unable to submit job.');
+  }
+}
+
+function renderJobsList(){
+  if (!state.jobs.length) {
+    document.getElementById('jobsList').innerHTML = '<p class="text-soft">No jobs posted yet.</p>';
+    return;
+  }
+
+  document.getElementById('jobsList').innerHTML = state.jobs.map(job => `
+    <div class="card mt-12">
+      <strong>${job.title}</strong>
+      <p class="text-soft">${job.location} · ${job.employmentType} · ${job.quantity || 1} vacancy${Number(job.quantity) === 1 ? '' : 'ies'} · ${job.status}</p>
+      <div class="mt-8">
+        ${job.status === 'published' ? `<button class="btn btn-outline btn-sm" onclick="closeJob('${job._id}')">Close Job</button>` : ''}
+        ${job.status !== 'closed' ? `<button class="btn btn-outline btn-sm" onclick="editJob('${job._id}')">Edit</button>` : ''}
+        <button class="btn btn-outline btn-sm" onclick="deleteJob('${job._id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function closeJob(id){
+  await apiCall(`/jobs/${id}/close`, { method: 'PATCH' });
+  toast('Job closed');
+  await loadOwnerData();
+}
+
+function editJob(id) {
+  const job = state.jobs.find((item) => item._id === id);
+  if (!job) return;
+  switchPanel('jobs');
+  const fields = {
+    jobTitle: job.title, jobLocation: job.location, jobType: job.employmentType, jobCategory: job.category,
+    jobDescription: job.description, jobRequirements: job.requirements, jobSkills: (job.skills || []).join(', '),
+    jobSalary: job.salary, jobQuantity: job.quantity || 1, jobExperience: job.experience, jobEducation: job.education,
+    jobApplicationMethod: job.applicationMethod || 'tirur_connect', jobApplicationLink: job.applicationLink || '',
+    jobClosing: job.closingDate ? new Date(job.closingDate).toISOString().slice(0, 10) : '',
+  };
+  Object.entries(fields).forEach(([field, value]) => { const element = document.getElementById(field); if (element) element.value = value || ''; });
+  const button = document.querySelector('#jobForm button');
+  button.textContent = 'Update and Submit for Approval';
+  button.onclick = async () => {
+    const payload = {
+      title: document.getElementById('jobTitle').value.trim(), description: document.getElementById('jobDescription').value.trim(),
+      location: document.getElementById('jobLocation').value.trim(), employmentType: document.getElementById('jobType').value,
+      category: document.getElementById('jobCategory').value.trim(), requirements: document.getElementById('jobRequirements').value.trim(),
+      skills: document.getElementById('jobSkills').value.split(',').map((s) => s.trim()).filter(Boolean), salary: document.getElementById('jobSalary').value.trim(),
+      quantity: Number(document.getElementById('jobQuantity').value || 1), experience: document.getElementById('jobExperience').value.trim(),
+      education: document.getElementById('jobEducation').value.trim(), applicationMethod: document.getElementById('jobApplicationMethod').value,
+      applicationLink: document.getElementById('jobApplicationLink').value.trim(), closingDate: document.getElementById('jobClosing').value || undefined,
+    };
+    await apiCall(`/jobs/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    toast('Job updated and submitted for Admin approval.');
+    renderJobForm();
+    await loadOwnerData();
+  };
+}
+
+async function deleteJob(id){
+  await apiCall(`/jobs/${id}`, { method: 'DELETE' });
+  toast('Job deleted');
+  await loadOwnerData();
+}
+
+function renderApplications(){
+  if (!state.applications.length) {
+    document.getElementById('applicationsList').innerHTML = `
+      <div class="empty-state" style="padding:32px 16px;">
+        <div class="ic">📝</div>
+        <p>No applicants yet.</p>
+        <p class="text-soft">Applications will appear here when job seekers apply for your jobs.</p>
+      </div>`;
+    return;
+  }
+
+  const statusColor = s => s==='shortlisted'?'#137a3f':s==='eligible'?'#0369a1':s==='rejected'||s==='not_eligible'?'#b91c1c':'#8a5a00';
+  const statusBg    = s => s==='shortlisted'?'#e4f7e9':s==='eligible'?'#e0f2fe':s==='rejected'||s==='not_eligible'?'#fdeaea':'#fff3de';
+
+  document.getElementById('applicationsList').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <span style="font-size:15px;font-weight:800;color:#1a2420;">${state.applications.length} Application${state.applications.length===1?'':'s'}</span>
+        <span style="margin-left:8px;font-size:12px;color:#5b6b64;">${state.applications.filter(a=>a.status==='submitted').length} new</span>
+      </div>
+    </div>
+    ${state.applications.map(app => {
+      const name = app.jobSeeker?.name || 'Candidate';
+      const initial = name.charAt(0).toUpperCase();
+      const jobTitle = app.job?.title || 'Job';
+      const applied = app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '';
+      return `
+      <div style="background:#fff;border:1.5px solid ${app.status==='submitted'?'#c8ead9':'#e3e8e5'};border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(15,110,81,.06);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <!-- Avatar -->
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0a4f3a,#0f6e51);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800;flex-shrink:0;">${escapeHtml(initial)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:800;color:#1a2420;">${escapeHtml(name)}</div>
+            <div style="font-size:12px;color:#5b6b64;">Applied for: <b style="color:#0a4f3a;">${escapeHtml(jobTitle)}</b> · ${applied}</div>
+          </div>
+          <span style="background:${statusBg(app.status)};color:${statusColor(app.status)};font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;">${escapeHtml(app.status).toUpperCase().replace('_',' ')}</span>
+        </div>
+
+        <!-- Quick details -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
+          <div style="background:#f8fcfa;border-radius:8px;padding:7px 10px;">
+            <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Education</div>
+            <div style="font-size:12px;font-weight:700;color:#1a2420;">${escapeHtml(app.education || '—')}</div>
+          </div>
+          <div style="background:#f8fcfa;border-radius:8px;padding:7px 10px;">
+            <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Experience</div>
+            <div style="font-size:12px;font-weight:700;color:#1a2420;">${escapeHtml(app.experience || '—')}</div>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button onclick="viewCandidate('${app._id}')"
+            style="flex:1;min-width:100px;background:#0f6e51;color:#fff;border:none;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;">
+            👤 View Details
+          </button>
+          ${app.status !== 'eligible' ? `<button onclick="quickUpdateStatus('${app._id}','eligible')"
+            style="background:#e0f2fe;color:#0369a1;border:none;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;">
+            ✓ Eligible
+          </button>` : ''}
+          ${app.status !== 'shortlisted' ? `<button onclick="quickUpdateStatus('${app._id}','shortlisted')"
+            style="background:#e4f7e9;color:#137a3f;border:none;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;">
+            ⭐ Shortlist
+          </button>` : ''}
+          ${app.status !== 'rejected' ? `<button onclick="quickUpdateStatus('${app._id}','rejected')"
+            style="background:#fdeaea;color:#b91c1c;border:none;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;">
+            ✕ Reject
+          </button>` : ''}
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+async function quickUpdateStatus(id, status){
+  try {
+    await apiCall(`/applications/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    const labels = { eligible:'Marked Eligible', shortlisted:'Shortlisted ⭐', rejected:'Rejected', not_eligible:'Marked Not Eligible' };
+    toast(labels[status] || 'Status updated');
+    await loadOwnerData();
+  } catch(error){ toast(error.message || 'Unable to update status.'); }
+}
+
+async function viewCandidate(id){
+  try {
+    const result = await apiCall(`/applications/${id}`);
+    const application = result.application || {};
+    const candidate = application.jobSeeker || {};
+    const skills = (application.skills?.length ? application.skills : candidate.skills || []);
+    const skillsHtml = skills.length ? skills.map(s=>`<span style="background:#e6f4ef;color:#0a4f3a;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;">${escapeHtml(s)}</span>`).join(' ') : '<span style="color:#8fa89e;">—</span>';
+    const statusColor = s => s==='shortlisted'?'#137a3f':s==='eligible'?'#0369a1':s==='rejected'||s==='not_eligible'?'#b91c1c':'#8a5a00';
+    const statusBg    = s => s==='shortlisted'?'#e4f7e9':s==='eligible'?'#e0f2fe':s==='rejected'||s==='not_eligible'?'#fdeaea':'#fff3de';
+
+    document.getElementById('candidateDetails').innerHTML = `
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #e3e8e5;">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#0a4f3a,#0f6e51);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:800;flex-shrink:0;">
+          ${escapeHtml((candidate.name||'C').charAt(0).toUpperCase())}
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:18px;font-weight:800;color:#1a2420;">${escapeHtml(candidate.name||'Candidate')}</div>
+          <div style="font-size:12.5px;color:#5b6b64;margin-top:2px;">
+            Applied for: <b style="color:#0a4f3a;">${escapeHtml(application.job?.title||'—')}</b>
+          </div>
+        </div>
+        <span style="background:${statusBg(application.status)};color:${statusColor(application.status)};font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;white-space:nowrap;">
+          ${escapeHtml(application.status||'submitted').toUpperCase().replace('_',' ')}
+        </span>
+      </div>
+
+      <!-- Contact details -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        ${[
+          {label:'Email', value:candidate.email},
+          {label:'Phone', value:candidate.phone},
+          {label:'Location', value:candidate.location},
+          {label:'Applied on', value:application.createdAt?new Date(application.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'},
+        ].map(f=>`
+          <div style="background:#f8fcfa;border-radius:9px;padding:10px 12px;">
+            <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">${f.label}</div>
+            <div style="font-size:13px;font-weight:700;color:#1a2420;">${escapeHtml(f.value||'—')}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Education & Experience -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div style="background:#f8fcfa;border-radius:9px;padding:10px 12px;">
+          <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Education</div>
+          <div style="font-size:13px;font-weight:700;color:#1a2420;">${escapeHtml(application.education||candidate.education||'—')}</div>
+        </div>
+        <div style="background:#f8fcfa;border-radius:9px;padding:10px 12px;">
+          <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Experience</div>
+          <div style="font-size:13px;font-weight:700;color:#1a2420;">${escapeHtml(application.experience||candidate.experience||'—')}</div>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;">Skills</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">${skillsHtml}</div>
+      </div>
+
+      <!-- Cover Letter -->
+      ${application.coverLetter ? `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;">Cover Letter</div>
+        <div style="background:#f8fcfa;border-radius:9px;padding:12px;font-size:13px;color:#1a2420;line-height:1.6;">${escapeHtml(application.coverLetter)}</div>
+      </div>` : ''}
+
+      <!-- CV -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:11px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;">CV</div>
+        ${application._id ? `<button onclick="viewCandidateCv('${application._id}')" style="display:flex;align-items:center;gap:8px;background:#0f6e51;color:#fff;border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;">📄 View / Download CV</button>` : '<span style="color:#8fa89e;font-size:13px;">No CV attached</span>'}
+      </div>
+
+      <!-- Action buttons -->
+      <div style="border-top:1px solid #e3e8e5;padding-top:14px;">
+        <div style="font-size:11px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Update Status</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="quickUpdateStatus('${application._id}','eligible');closeCandidateModal();"
+            style="flex:1;min-width:90px;background:#e0f2fe;color:#0369a1;border:none;border-radius:9px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">✓ Eligible</button>
+          <button onclick="quickUpdateStatus('${application._id}','shortlisted');closeCandidateModal();"
+            style="flex:1;min-width:90px;background:#e4f7e9;color:#137a3f;border:none;border-radius:9px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">⭐ Shortlist</button>
+          <button onclick="quickUpdateStatus('${application._id}','not_eligible');closeCandidateModal();"
+            style="flex:1;min-width:90px;background:#fff3de;color:#8a5a00;border:none;border-radius:9px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">— Not Eligible</button>
+          <button onclick="quickUpdateStatus('${application._id}','rejected');closeCandidateModal();"
+            style="flex:1;min-width:90px;background:#fdeaea;color:#b91c1c;border:none;border-radius:9px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">✕ Reject</button>
+        </div>
+      </div>`;
+    document.getElementById('candidateModal').classList.add('open');
+  } catch(error){ toast(error.message || 'Unable to load candidate.'); }
+}
+
+function escapeHtml(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+function closeCandidateModal(){ document.getElementById('candidateModal').classList.remove('open'); }
+async function viewCandidateCv(id){
+  const preview = window.open('', '_blank');
+  if(!preview){ toast('Please allow pop-ups to view the CV.'); return; }
+  preview.document.write('<p style="font-family:Arial,sans-serif;padding:24px;">Loading CV...</p>');
+  try {
+    const result = await apiCall(`/applications/${id}/cv`);
+    const cv = result.cv;
+    const encodedFile = String(cv.file || '').replace(/^data:[^,]+,/, '');
+    const byteCharacters = atob(encodedFile);
+    const bytes = new Uint8Array(byteCharacters.length);
+    for(let index = 0; index < byteCharacters.length; index++) bytes[index] = byteCharacters.charCodeAt(index);
+    const blob = new Blob([bytes], { type: cv.fileType || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    preview.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) { preview.close(); toast(error.message || 'Unable to load candidate CV.'); }
+}
+
+async function updateApplicationStatus(id){
+  const value = document.getElementById(`status-${id}`).value;
+  await apiCall(`/applications/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: value }) });
+  toast('Application updated');
+  await loadOwnerData();
+}
+
+function renderMembership(){
+  const membership = state.membership;
+  if (!membership) {
+    document.getElementById('membershipStatus').innerHTML = `
+      <p class="text-soft">No chamber membership record yet.</p>
+      <button class="btn btn-primary" onclick="applyMembership()">Apply for Chamber Membership</button>
+    `;
+    return;
+  }
+
+  document.getElementById('membershipStatus').innerHTML = `
+    <p><strong>Business:</strong> ${membership.businessName || '—'}</p>
+    <p><strong>Status:</strong> ${membership.status}</p>
+    <p><strong>Plan:</strong> ${membership.plan || '—'}</p>
+    <p><strong>Expires:</strong> ${membership.expiresAt ? new Date(membership.expiresAt).toLocaleDateString() : '—'}</p>
+  `;
+}
+
+async function applyMembership(){
+  await apiCall('/membership', { method: 'POST', body: JSON.stringify({ plan: 'standard' }) });
+  toast('Membership application submitted');
+  await loadOwnerData();
+}
+
+function renderQr(){
+  const qr = state.qr;
+  const m = state.membership;
+  const panel = document.getElementById('qrStatus');
+  if (!qr || !qr.publicId) {
+    panel.innerHTML = `
+      <div class="empty-state">
+        <div class="ic">📲</div>
+        <p>No active QR code yet.</p>
+        <p class="text-soft">Complete and get your Chamber Membership approved to activate your QR ID card.</p>
+        <a href="membership.html" class="btn btn-primary btn-sm mt-12">Go to Chamber Membership →</a>
+      </div>`;
+    return;
+  }
+  const publicUrl = qr.publicUrl || `${window.location.origin}/chamber-member-profile.html?publicId=${encodeURIComponent(qr.publicId)}`;
+  const imgSrc = qr.imageDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=1&data=${encodeURIComponent(publicUrl)}`;
+  const expiryDate = m?.membershipExpiryDate ? new Date(m.membershipExpiryDate).toLocaleDateString('en-IN') : (m?.expiresAt ? new Date(m.expiresAt).toLocaleDateString('en-IN') : '—');
+  panel.innerHTML = `
+    <div class="id-card">
+      <div class="id-card-header">
+        <span class="org-name">🏅 TIRUR CHAMBER OF COMMERCE</span>
+        <span class="tag-badge">VERIFIED MEMBER</span>
+      </div>
+      <div class="id-card-body">
+        <div class="id-card-qr"><img src="${imgSrc}" alt="QR Code"></div>
+        <div class="id-card-info">
+          <div class="biz-name">${escapeHtml(m?.businessName || qr.businessName || state.business?.name || '—')}</div>
+          <div class="biz-cat">${escapeHtml(m?.category || state.business?.category || '')}</div>
+          <div class="detail-row"><b>Owner:</b> ${escapeHtml(state.user?.name || '—')}</div>
+          <div class="detail-row"><b>Plan:</b> ${escapeHtml(m?.plan || '—')}</div>
+        </div>
+      </div>
+      <div class="id-card-footer">
+        <div>
+          <div class="member-num">${escapeHtml(qr.membershipNumber || m?.membershipNumber || 'Active')}</div>
+          <div class="valid-till">Valid until ${expiryDate}</div>
+        </div>
+        <div class="verified-chip">✓ Active QR</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+      <a class="btn btn-outline btn-sm" href="${publicUrl}" target="_blank" rel="noopener">View Public Profile</a>
+      <button class="btn btn-primary btn-sm" onclick="downloadOwnerQr('${imgSrc}','${escapeHtml(qr.membershipNumber || 'member')}')">Download QR</button>
+    </div>`;
+}
+function downloadOwnerQr(src, memberNum){
+  const link = document.createElement('a');
+  link.href = src;
+  link.download = `${memberNum}-chamber-qr.png`;
+  link.click();
+}
+
+function getNotificationLink(n) {
+  const type = n.type || '';
+  const entity = n.entityType || '';
+  // Candidate/application notifications → applicants panel
+  if (type === 'application_submitted' || type.includes('application') || entity === 'JobApplication') return 'applications';
+  // Job notifications → jobs panel
+  if (type.includes('job') || entity === 'Job') return 'jobs';
+  // Membership notifications → membership panel
+  if (type.includes('membership') || entity === 'ChamberMembership') return 'membership';
+  // Business notifications → business panel
+  if (type.includes('business') || entity === 'Business') return 'business';
+  return null;
+}
+
+function getNotificationIcon(n) {
+  const type = n.type || '';
+  if (n.readAt) return '📭';
+  if (type === 'application_submitted' || type.includes('application')) return '📝';
+  if (type.includes('shortlisted')) return '⭐';
+  if (type.includes('approved')) return '✅';
+  if (type.includes('rejected')) return '❌';
+  if (type.includes('membership')) return '🎖️';
+  if (type.includes('job')) return '💼';
+  if (type.includes('business')) return '🏪';
+  return '🔔';
+}
+
+async function openShopOwnerNotification(id, panel){
+  switchPanel(panel);
+  const notification = (state.notifications || []).find(note => String(note._id) === String(id));
+  if (!notification || notification.readAt) return;
+  try {
+    await apiCall(`/notifications/${id}/read`, { method: 'PATCH' });
+    notification.readAt = new Date().toISOString();
+    renderNotifications();
+  } catch (error) {
+    toast(error.message || 'Unable to mark notification as read.');
+  }
+}
+
+function renderNotifications(){
+  const notes = state.notifications || [];
+  if (!notes.length) {
+    document.getElementById('notificationsList').innerHTML = '<div class="empty-state"><div class="ic">🔔</div><p>No notifications yet.</p></div>';
+    return;
+  }
+  const unread = notes.filter(n => !n.readAt);
+  document.getElementById('notificationsList').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <span style="font-size:13.5px;font-weight:800;color:#1a2420;">${notes.length} Notification${notes.length===1?'':'s'}</span>
+        ${unread.length ? `<span style="margin-left:8px;background:#fdeaea;color:#b91c1c;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;">${unread.length} unread</span>` : ''}
+      </div>
+      ${unread.length ? `<button onclick="markAllRead()" style="background:#f0faf5;border:1.5px solid #c8ead9;color:#0a4f3a;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">✓ Mark all read</button>` : ''}
+    </div>
+    ${notes.map(n => {
+      const link = getNotificationLink(n);
+      const icon = getNotificationIcon(n);
+      const actionLabel = link === 'applications' ? 'View Applicants →' :
+                          link === 'jobs'         ? 'View Jobs →' :
+                          link === 'membership'   ? 'View Membership →' :
+                          link === 'business'     ? 'View Business →' : '';
+      return `
+      <div onclick="${link ? `openShopOwnerNotification('${n._id}','${link}')` : 'void(0)'}"
+        style="
+          display:flex;gap:12px;align-items:flex-start;
+          padding:13px 14px;border-radius:12px;margin-bottom:8px;
+          background:${n.readAt ? '#fafafa' : '#fff'};
+          border:1.5px solid ${n.readAt ? '#f0f0f0' : '#c8ead9'};
+          ${n.readAt ? 'opacity:.75;' : ''}
+          ${link ? 'cursor:pointer;' : ''}
+          transition:.15s ease;
+        "
+        ${link ? `onmouseover="this.style.borderColor='#0f6e51';this.style.background='#f0faf5';" onmouseout="this.style.borderColor='${n.readAt?'#f0f0f0':'#c8ead9'}';this.style.background='${n.readAt?'#fafafa':'#fff'}';"` : ''}
+      >
+        <!-- Icon -->
+        <div style="
+          width:40px;height:40px;border-radius:10px;flex-shrink:0;
+          background:${n.readAt ? '#f5f5f5' : 'linear-gradient(135deg,#e6f4ef,#c8ead9)'};
+          display:flex;align-items:center;justify-content:center;font-size:19px;
+        ">${icon}</div>
+
+        <!-- Content -->
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:13px;margin:0 0 5px;line-height:1.4;" :style="{fontWeight: !n.readAt ? '700' : '400', color: !n.readAt ? '#1a2420' : '#5b6b64'}"><span>${escapeHtml(n.message || n.type)}</span></p>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:#8fa89e;">${n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-IN',{year:'numeric',month:'short',day:'numeric'}) : ''}</span>
+            ${link ? `<span style="font-size:11px;color:#0f6e51;font-weight:700;">${actionLabel}</span>` : ''}
+          </div>
+        </div>
+
+        <!-- Mark read button -->
+        <div style="flex-shrink:0;">
+          ${!n.readAt
+            ? `<button onclick="event.stopPropagation();markNotificationRead('${n._id}')" style="background:#f0faf5;border:1px solid #c8ead9;color:#0a4f3a;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Mark Read</button>`
+            : `<span style="font-size:10px;color:#8fa89e;font-weight:600;">✓ Read</span>`}
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+async function markAllRead(){
+  try {
+    await apiCall('/notifications/read-all', { method: 'PATCH' });
+    toast('All notifications marked read.');
+    await loadOwnerData();
+  } catch(e){ toast(e.message || 'Unable to update notifications.'); }
+}
+
+async function markNotificationRead(id){
+  await apiCall(`/notifications/${id}/read`, { method: 'PATCH' });
+  toast('Notification marked read');
+  await loadOwnerData();
+}
+
+function renderDashboardSummary(){
+  const d = state.dashboard || {};
+  const biz = state.business;
+  const membership = state.membership;
+  const recentJobs = (state.jobs || []).slice(0, 3);
+  const recentApps = (state.applications || []).slice(0, 3);
+
+  const bizBlock = biz
+    ? `<div style="display:flex; align-items:center; gap:10px; padding:10px; background:var(--brand-light); border-radius:10px; margin-bottom:12px;">
+        <span style="font-size:26px;">🏪</span>
+        <div>
+          <p style="font-weight:700; margin:0;">${escapeHtml(biz.name)}</p>
+          <p class="text-soft" style="margin:2px 0 0; font-size:12px;">${escapeHtml(biz.category || '')} · <span class="status ${biz.status === 'approved' ? 'active' : 'pending'}">${escapeHtml(biz.status || 'pending').toUpperCase()}</span></p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="switchPanel('business')" style="margin-left:auto;">Edit</button>
+       </div>`
+    : `<div style="padding:10px; background:#fff8e8; border:1px dashed var(--accent-dark); border-radius:10px; margin-bottom:12px;">
+        <p style="font-weight:700; color:#7a5400; margin:0 0 4px;">⚠️ No business profile yet</p>
+        <button class="btn btn-primary btn-sm mt-8" onclick="switchPanel('business')">Create Business Profile</button>
+       </div>`;
+
+  const jobsBlock = recentJobs.length
+    ? `<h4 style="font-size:13px; margin:14px 0 8px; color:var(--ink-soft);">RECENT JOBS</h4>
+       ${recentJobs.map(j => `
+         <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+           <div>
+             <p style="font-size:13px; font-weight:700; margin:0;">${escapeHtml(j.title)}</p>
+             <p class="text-soft" style="font-size:11.5px; margin:2px 0 0;">${escapeHtml(j.location || '')} · ${escapeHtml(j.employmentType || '')}</p>
+           </div>
+           <span class="status ${j.status === 'published' ? 'active' : j.status === 'rejected' ? 'declined' : 'pending'}">${escapeHtml(j.status).toUpperCase()}</span>
+         </div>`).join('')}
+       <button class="btn btn-outline btn-sm mt-12" onclick="switchPanel('jobs')">View all jobs →</button>`
+    : `<p class="text-soft" style="font-size:13px; margin-top:14px;">No jobs posted yet. <a href="#" onclick="switchPanel('jobs'); return false;" style="color:var(--brand); font-weight:700;">Post a job →</a></p>`;
+
+  const appsBlock = recentApps.length
+    ? `<h4 style="font-size:13px; margin:14px 0 8px; color:var(--ink-soft);">RECENT APPLICANTS</h4>
+       ${recentApps.map(a => `
+         <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+           <div>
+             <p style="font-size:13px; font-weight:700; margin:0;">${escapeHtml(a.jobSeeker?.name || 'Candidate')}</p>
+             <p class="text-soft" style="font-size:11.5px; margin:2px 0 0;">${escapeHtml(a.job?.title || 'Job')} · ${a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN') : ''}</p>
+           </div>
+           <span class="status ${a.status === 'shortlisted' || a.status === 'eligible' ? 'active' : a.status === 'rejected' || a.status === 'not_eligible' ? 'declined' : 'pending'}">${escapeHtml(a.status).toUpperCase()}</span>
+         </div>`).join('')}
+       <button class="btn btn-outline btn-sm mt-12" onclick="switchPanel('applications')">View all applicants →</button>`
+    : '';
+
+  const memberBlock = membership
+    ? `<div style="display:flex; align-items:center; justify-content:space-between; padding:10px; background:${membership.status === 'active' ? '#f0faf4' : '#fff8e8'}; border-radius:10px; margin-top:14px;">
+        <div>
+          <p style="font-weight:700; font-size:13px; margin:0;">🎖️ Chamber Membership</p>
+          <p class="text-soft" style="font-size:11.5px; margin:2px 0 0;">${escapeHtml(membership.plan || '')} · <span style="font-weight:700; color:${membership.status === 'active' ? 'var(--brand-dark)' : '#7a5400'};">${escapeHtml(membership.status).toUpperCase()}</span></p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="switchPanel('membership')">View</button>
+       </div>`
+    : `<div style="margin-top:14px; padding:10px; background:#f5f7f6; border-radius:10px;">
+        <p style="font-size:13px; margin:0;">🎖️ <a href="membership.html" style="color:var(--brand); font-weight:700;">Apply for Chamber Membership</a></p>
+       </div>`;
+
+  document.getElementById('dashboardSummary').innerHTML = bizBlock + jobsBlock + appsBlock + memberBlock;
+}
+
+function formatOverviewRelativeTime(dateValue) {
+  if (!dateValue) return 'Recently';
+  const diffMs = Date.now() - new Date(dateValue).getTime();
+  const minutes = Math.max(1, Math.round(diffMs / 60000));
+  if (minutes < 60) return `Posted ${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `Posted ${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.round(hours / 24);
+  return `Posted ${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+function renderOverviewMembershipAside() {
+  const target = document.getElementById('overviewMembershipAside');
+  if (!target) return;
+  const membership = state.membership;
+  const isActive = membership?.status === 'active';
+
+  if (isActive) {
+    target.innerHTML = `
+      <h3 style="font-size:14.5px;">🔒 Candidate Resumes</h3>
+      <p class="text-soft">You have access to candidate contact details and resumes with your active Chamber Membership.</p>
+      <button type="button" class="btn btn-outline btn-block mt-8" onclick="switchPanel('resumes')">Browse CVs</button>
+    `;
+    return;
+  }
+
+  target.innerHTML = `
+    <h3 style="font-size:14.5px;">🔒 Candidate Resumes</h3>
+    <p class="text-soft">Candidate contact details and resumes are available to businesses with an <b>active, paid Chamber Membership</b>.</p>
+    <a href="membership.html" class="btn btn-accent btn-block mt-8">Become a Chamber Member</a>
+  `;
+}
+
+async function renderOverviewJobs() {
+  const target = document.getElementById('overviewJobGrid');
+  if (!target) return;
+
+  try {
+    const params = new URLSearchParams();
+    if (overviewQuery) params.set('search', overviewQuery);
+    if (overviewTypeFilter) params.set('employmentType', overviewTypeFilter);
+    const response = await fetch(`${API_BASE_URL}/jobs${params.toString() ? `?${params.toString()}` : ''}`);
+    const result = await response.json().catch(() => ({}));
+    const jobs = (result.data || []).filter((job) => job && job.status === 'published');
+
+    target.innerHTML = jobs.length ? jobs.map((job) => `
+      <article class="card job-card job-card-rich">
+        <div class="job-card-top">
+          <div>
+            <span class="badge ${job.employmentType === 'Full Time' || job.employmentType === 'Full-time' ? 'type-full' : 'type-part'}">${escapeHtml(job.employmentType || 'Full Time')}</span>
+            <h3>${escapeHtml(job.title)}</h3>
+            <div class="company">${escapeHtml(job.business?.name || job.company || 'Business')} · 📍 ${escapeHtml(job.location || 'Location')}</div>
+          </div>
+          <span class="posted-time">${formatOverviewRelativeTime(job.createdAt)}</span>
+        </div>
+        <div class="job-meta-chips">
+          <span>${escapeHtml(job.location || 'Location')}</span>
+          <span>${escapeHtml(job.experience || 'Experience not specified')}</span>
+        </div>
+        <p class="text-soft">${escapeHtml(job.description || '')}</p>
+        <div class="job-skills">${(job.skills || []).slice(0, 3).map((skill) => `<span>${escapeHtml(skill)}</span>`).join('')}</div>
+        <div class="foot">
+          <b style="font-size:13.5px;color:var(--brand-dark)">${escapeHtml(job.salary || 'Salary negotiable')}</b>
+          <button type="button" class="btn btn-primary btn-sm" onclick="openOverviewJob('${job._id}')">View Details</button>
+        </div>
+      </article>
+    `).join('') : '<div class="empty-state"><div class="ic">💼</div>No jobs found.</div>';
+  } catch (error) {
+    target.innerHTML = '<div class="empty-state"><div class="ic">💼</div>No jobs found.</div>';
+  }
+}
+
+async function openOverviewJob(id) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/${id}`);
+    const result = await response.json().catch(() => ({}));
+    const job = result.job;
+    if (!job) return;
+
+    document.getElementById('jobModalBox').innerHTML = `
+      <div class="modal-close" onclick="closeOverviewJobModal()" style="cursor:pointer;font-size:22px;color:#5b6b64;text-align:right;margin-bottom:6px;">×</div>
+      <div class="job-detail-heading">
+        <span class="badge ${job.employmentType === 'Full-time' || job.employmentType === 'Full Time' ? 'type-full' : 'type-part'}">${escapeHtml(job.employmentType || 'Full Time')}</span>
+        <h2 style="margin:6px 0 4px;">${escapeHtml(job.title)}</h2>
+        <p style="margin:0;color:#5b6b64;">${escapeHtml(job.business?.name || job.company || 'Business')} · 📍 ${escapeHtml(job.location || 'Location')}</p>
+        <span class="posted-time">${formatOverviewRelativeTime(job.createdAt)}</span>
+      </div>
+      <div class="job-detail-grid" style="margin-top:12px;">
+        <span>📍 ${escapeHtml(job.location || 'Location')}</span>
+        <span>🎓 ${escapeHtml(job.education || 'Any')}</span>
+        <span>💰 ${escapeHtml(job.salary || 'Negotiable')}</span>
+        <span>👥 ${job.quantity || 1} vacancy</span>
+        <span>⏳ ${job.closingDate ? new Date(job.closingDate).toLocaleDateString('en-IN') : 'Open'}</span>
+        <span>💼 ${escapeHtml(job.experience || 'Any')}</span>
+      </div>
+      <section class="job-detail-section"><h4>Description</h4><p>${escapeHtml(job.description || '')}</p></section>
+      ${job.requirements ? `<section class="job-detail-section"><h4>Requirements</h4><p>${escapeHtml(job.requirements)}</p></section>` : ''}
+      ${(job.skills || []).length ? `<section class="job-detail-section"><h4>Skills</h4><div class="job-skills">${job.skills.map((skill) => `<span>${escapeHtml(skill)}</span>`).join('')}</div></section>` : ''}
+    `;
+    document.getElementById('jobModalBg').classList.add('open');
+  } catch (error) {
+    toast('Unable to load job details.');
+  }
+}
+
+function closeOverviewJobModal() {
+  document.getElementById('jobModalBg')?.classList.remove('open');
+}
+
+function openJobVacancyModal() {
+  const user = state.user || getSession();
+  if (!user || !['shop_owner', 'chamber_member'].includes(user.role) || user.status !== 'active') {
+    toast('Only active Shop Owners and Chamber Members can post job vacancies.');
+    return;
+  }
+
+  document.getElementById('careerModalBox').innerHTML = `
+    <div class="modal-close" onclick="closeCareerModal()" style="cursor:pointer;font-size:22px;color:#5b6b64;text-align:right;margin-bottom:6px;">×</div>
+    <h2 style="font-size:18px;margin-bottom:4px;">Upload Job Vacancy</h2>
+    <p class="text-soft" style="margin-bottom:14px;">Submit a job opening for admin review. Once approved, it will appear in the Career Panel.</p>
+    <form class="job-post-form" onsubmit="submitOverviewJobVacancy(event)">
+      <div class="grid cols-2">
+        <div class="form-group"><label>Job Title</label><input id="vacancyTitle" required placeholder="e.g. Customer Service Executive"></div>
+        <div class="form-group"><label>Location</label><input id="vacancyLocation" required placeholder="e.g. Tirur"></div>
+        <div class="form-group"><label>Employment Type</label><select id="vacancyType"><option value="Full-time">Full-time</option><option value="Part-time">Part-time</option><option value="Contract">Contract</option><option value="Internship">Internship</option></select></div>
+        <div class="form-group"><label>Category</label><input id="vacancyCategory" placeholder="e.g. Retail, HR"></div>
+        <div class="form-group" style="grid-column:1 / -1;"><label>Description</label><textarea id="vacancyDescription" required rows="3" placeholder="Role summary and responsibilities"></textarea></div>
+        <div class="form-group"><label>Requirements</label><textarea id="vacancyRequirements" rows="2" placeholder="Qualifications and experience"></textarea></div>
+        <div class="form-group"><label>Skills</label><input id="vacancySkills" placeholder="comma separated skills"></div>
+        <div class="form-group"><label>Salary</label><input id="vacancySalary" placeholder="e.g. 15k"></div>
+        <div class="form-group"><label>Number of Vacancies</label><input id="vacancyQuantity" type="number" min="1" value="1"></div>
+        <div class="form-group"><label>Experience</label><input id="vacancyExperience" placeholder="e.g. Fresher, 2 years"></div>
+        <div class="form-group"><label>Education</label><input id="vacancyEducation" placeholder="e.g. 12th Pass, B.Com"></div>
+        <div class="form-group"><label>Application Method</label><select id="vacancyApplicationMethod"><option value="tirur_connect">Apply through Tirur Connect</option><option value="external">External application</option></select></div>
+        <div class="form-group"><label>Application Link</label><input id="vacancyApplicationLink" type="url" placeholder="Required for external applications"></div>
+        <div class="form-group"><label>Closing Date</label><input id="vacancyClosing" type="date"></div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block mt-12" id="vacancySubmitBtn">Submit for Admin Approval</button>
+    </form>
+  `;
+  document.getElementById('careerModalBg').classList.add('open');
+}
+
+async function submitOverviewJobVacancy(event) {
+  event.preventDefault();
+  const btn = document.getElementById('vacancySubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+  const payload = {
+    title: document.getElementById('vacancyTitle').value.trim(),
+    description: document.getElementById('vacancyDescription').value.trim(),
+    location: document.getElementById('vacancyLocation').value.trim(),
+    employmentType: document.getElementById('vacancyType').value,
+    category: document.getElementById('vacancyCategory').value.trim(),
+    requirements: document.getElementById('vacancyRequirements').value.trim(),
+    skills: document.getElementById('vacancySkills').value.split(',').map((skill) => skill.trim()).filter(Boolean),
+    salary: document.getElementById('vacancySalary').value.trim(),
+    quantity: Number(document.getElementById('vacancyQuantity').value || 1),
+    experience: document.getElementById('vacancyExperience').value.trim(),
+    education: document.getElementById('vacancyEducation').value.trim(),
+    applicationMethod: document.getElementById('vacancyApplicationMethod').value,
+    applicationLink: document.getElementById('vacancyApplicationLink').value.trim(),
+    closingDate: document.getElementById('vacancyClosing').value || undefined,
+  };
+
+  try {
+    await apiCall('/jobs', { method: 'POST', body: JSON.stringify(payload) });
+    closeCareerModal();
+    toast('Job vacancy submitted. Waiting for admin approval.');
+    await loadOwnerData();
+  } catch (error) {
+    toast(error.message || 'Unable to submit job vacancy.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit for Admin Approval'; }
+  }
+}
+
+function bindOverviewCareerControls() {
+  const searchInput = document.getElementById('overviewJobSearch');
+  const typeFilter = document.getElementById('overviewTypeFilter');
+  if (searchInput && !searchInput.dataset.bound) {
+    searchInput.dataset.bound = '1';
+    searchInput.addEventListener('input', (event) => {
+      overviewQuery = event.target.value.trim();
+      renderOverviewJobs();
+    });
+  }
+  if (typeFilter && !typeFilter.dataset.bound) {
+    typeFilter.dataset.bound = '1';
+    typeFilter.addEventListener('change', (event) => {
+      overviewTypeFilter = event.target.value;
+      renderOverviewJobs();
+    });
+  }
+  document.getElementById('jobModalBg')?.addEventListener('click', (event) => {
+    if (event.target.id === 'jobModalBg') closeOverviewJobModal();
+  });
+  document.getElementById('careerModalBg')?.addEventListener('click', (event) => {
+    if (event.target.id === 'careerModalBg') closeCareerModal();
+  });
+}
+
+async function loadOwnerData(){
+  try {
+    const [profile, business, dashboard, jobs, applications, membership, qr, notifications] = await Promise.all([
+      apiCall('/profile'),
+      apiCall('/business'),
+      apiCall('/dashboard'),
+      apiCall('/jobs'),
+      apiCall('/applications'),
+      apiCall('/membership'),
+      apiCall('/qr'),
+      apiCall('/notifications')
+    ]);
+
+    state.user = profile.user;
+    state.business = business.business;
+    state.dashboard = dashboard;
+    state.jobs = jobs.data || [];
+    state.applications = applications.data || [];
+    state.membership = membership.membership;
+    state.qr = qr.qr;
+    state.notifications = notifications.data || [];
+
+    renderStatGrid();
+    renderDashboardSummary();
+    renderProfileForm();
+    renderBusinessForm();
+    renderJobForm();
+    renderJobsList();
+    renderApplications();
+    renderResumeDirectory('shopOwnerResumes');
+    renderResumeDirectory('overviewResumes');
+    renderOverviewJobs();
+    renderOverviewMembershipAside();
+    renderMembership();
+    renderQr();
+    renderNotifications();
+  } catch (error) {
+    console.error(error);
+    toast('Unable to load dashboard data.');
+  }
+}
+
+async function initDashboard(){
+  bindOverviewCareerControls();
+  await loadOwnerData();
+  document.getElementById('dashboardScreen').style.display = 'block';
+}
+
+verifyOwnerAccess();
+</script>
+</body>
+</html>

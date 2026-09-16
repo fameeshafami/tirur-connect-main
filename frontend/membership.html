@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chamber Membership &mdash; Tirur Connect</title>
+<link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<main>
+  <section class="section" style="padding-bottom:0;">
+    <div class="container">
+      <h1 style="font-size:19px;">Chamber of Commerce Membership</h1>
+      <p class="text-soft">Register your business, track approval status, and renew online.</p>
+      <div class="lock-note" id="topNotice" style="background:var(--brand-light); border-color:var(--brand); color:var(--brand-dark);">
+        <span>&#127941;</span>
+        <div>This is the <b>paid Chamber of Commerce Membership</b> registration only &mdash; it includes priority directory placement, job postings, resume access &amp; homepage ad slots.
+        Just want a free basic listing? <a href="list-business.html" style="font-weight:700; color:var(--brand-dark); text-decoration:underline;">Use the free &ldquo;List Your Business&rdquo; form instead &rarr;</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SHOP OWNER: application form ── -->
+  <section class="section" id="ownerSection">
+    <div class="container two-col">
+      <div class="form-card" id="regFormCard">
+        <div class="step-track"><div class="seg done"></div><div class="seg" id="seg2"></div><div class="seg" id="seg3"></div></div>
+        <h3 style="font-size:16px;">New Membership Application</h3>
+        <p class="text-soft">Fields marked * are required. Your application will be reviewed by the Chamber admin team.</p>
+        <div class="form-group"><label>Business Name *</label><input type="text" id="f_bizname" placeholder="e.g. Your business name" readonly></div>
+        <div class="form-group"><label>Owner Full Name *</label><input type="text" id="f_owner" placeholder="e.g. Owner name" readonly></div>
+        <div class="form-group"><label>Email *</label><input type="email" id="f_email" placeholder="owner@example.com" readonly></div>
+        <div class="form-group"><label>Phone *</label><input type="tel" id="f_phone" placeholder="+91 90000 00000" readonly></div>
+        <div class="form-group"><label>Business Category *</label><input id="f_cat" readonly></div>
+        <div class="form-group">
+          <label>Membership Plan *</label>
+          <select id="f_plan">
+            <option value="Silver &mdash; &#8377;2,500/yr">Silver &mdash; &#8377;2,500/yr (Directory + Basic Listing)</option>
+            <option value="Gold &mdash; &#8377;5,000/yr">Gold &mdash; &#8377;5,000/yr (+ Job Postings + Resume Access)</option>
+            <option value="Platinum &mdash; &#8377;10,000/yr">Platinum &mdash; &#8377;10,000/yr (+ Homepage Ad Slot)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Business Registration Document *</label>
+          <div class="file-drop" id="fileDrop">
+            &#128196; <span id="fileLabel">Business details are taken from your verified Shop Owner profile.</span>
+          </div>
+          <p class="hint">Update your business profile first if any of these details need changing.</p>
+        </div>
+        <button class="btn btn-primary btn-block mt-8" id="submitButton" onclick="submitApplication()">Submit Application &rarr;</button>
+        <p class="text-soft" id="paymentNote" style="font-size:12px; margin-top:8px; text-align:center; display:none;">&#128274; Payment will be collected by the Chamber office.</p>
+      </div>
+      <div>
+        <div class="card" id="myStatusCard"></div>
+        <div class="card mt-12">
+          <h3 style="font-size:14.5px;">&#128204; How it works</h3>
+          <div class="text-soft" style="font-size:12.5px; line-height:1.7;">
+            1. Create and save your business profile.<br>
+            2. Submit a membership application for Chamber review.<br>
+            3. When approved, your verified QR profile is activated.<br>
+            4. Membership status and renewal are managed by the Chamber office.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CHAMBER MEMBER: hero + ID card + all members ── -->
+  <section id="memberSection" style="display:none;">
+
+    <!-- Hero banner -->
+    <div style="background:linear-gradient(135deg,#062e22 0%,#0a4f3a 50%,#0f6e51 100%);padding:40px 0 56px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:-60px;right:-60px;width:260px;height:260px;background:rgba(255,255,255,.05);border-radius:50%;"></div>
+      <div style="position:absolute;bottom:-80px;left:-40px;width:300px;height:300px;background:rgba(255,255,255,.04);border-radius:50%;"></div>
+      <div class="container" style="position:relative;z-index:1;">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.35);border-radius:30px;padding:6px 16px;margin-bottom:16px;">
+          <span style="width:8px;height:8px;background:#4ade80;border-radius:50%;display:inline-block;box-shadow:0 0 0 2px rgba(74,222,128,.3);"></span>
+          <span style="color:#4ade80;font-size:12px;font-weight:800;letter-spacing:.06em;">VERIFIED CHAMBER MEMBER</span>
+        </div>
+        <h1 style="color:#fff;font-size:28px;font-weight:800;margin:0 0 8px;line-height:1.2;" id="heroBizName">Chamber Membership</h1>
+        <p style="color:rgba(255,255,255,.65);font-size:14px;margin:0 0 24px;" id="heroCategoryLine">Tirur Chamber of Commerce · Official Member</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="chamber-member.html" style="display:inline-flex;align-items:center;gap:7px;background:#fff;color:#0a4f3a;border-radius:12px;padding:11px 20px;font-size:13px;font-weight:800;text-decoration:none;">🏅 Member Dashboard →</a>
+          <button onclick="scrollToMembers()" style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:11px 20px;font-size:13px;font-weight:800;cursor:pointer;">👥 View All Members</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div style="background:#fff;border-bottom:1px solid #e3e8e5;padding:0;">
+      <div class="container">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center;" id="memberStatsStrip">
+          <div style="padding:18px 8px;border-right:1px solid #e3e8e5;"><div style="font-size:22px;font-weight:800;color:#0a4f3a;" id="statMemberNum">—</div><div style="font-size:11px;color:#8fa89e;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">Member No.</div></div>
+          <div style="padding:18px 8px;border-right:1px solid #e3e8e5;"><div style="font-size:22px;font-weight:800;color:#0a4f3a;" id="statPlan">—</div><div style="font-size:11px;color:#8fa89e;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">Plan</div></div>
+          <div style="padding:18px 8px;border-right:1px solid #e3e8e5;"><div style="font-size:22px;font-weight:800;color:#22c55e;" id="statStatus">ACTIVE</div><div style="font-size:11px;color:#8fa89e;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">Status</div></div>
+          <div style="padding:18px 8px;"><div style="font-size:22px;font-weight:800;color:#0a4f3a;" id="statExpiry">—</div><div style="font-size:11px;color:#8fa89e;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">Expires</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="container">
+
+        <!-- ID card + info row -->
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start;margin-bottom:32px;" id="memberTopRow">
+          <div id="memberIdCard" style="max-width:380px;width:100%;"></div>
+          <div>
+            <div id="memberInfoCard" style="background:#fff;border:1px solid #e3e8e5;border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:0 2px 10px rgba(15,110,81,.07);"></div>
+            <!-- Benefits -->
+            <div style="background:linear-gradient(135deg,#f0faf5,#e6f4ef);border:1px solid #c8ead9;border-radius:16px;padding:20px;">
+              <div style="font-size:14px;font-weight:800;color:#0a4f3a;margin-bottom:14px;">🎁 Your Membership Benefits</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:9px;padding:9px 11px;border:1px solid #c8ead9;"><span style="color:#22c55e;font-size:14px;">✓</span><span style="font-size:12px;font-weight:600;color:#1a2420;">Priority directory placement</span></div>
+                <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:9px;padding:9px 11px;border:1px solid #c8ead9;"><span style="color:#22c55e;font-size:14px;">✓</span><span style="font-size:12px;font-weight:600;color:#1a2420;">Post unlimited jobs</span></div>
+                <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:9px;padding:9px 11px;border:1px solid #c8ead9;"><span style="color:#22c55e;font-size:14px;">✓</span><span style="font-size:12px;font-weight:600;color:#1a2420;">Access all candidate CVs</span></div>
+                <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:9px;padding:9px 11px;border:1px solid #c8ead9;"><span style="color:#22c55e;font-size:14px;">✓</span><span style="font-size:12px;font-weight:600;color:#1a2420;">Homepage ad slots</span></div>
+                <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:9px;padding:9px 11px;border:1px solid #c8ead9;"><span style="color:#22c55e;font-size:14px;">✓</span><span style="font-size:12px;font-weight:600;color:#1a2420;">Verified QR identity</span></div>
+                <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:9px;padding:9px 11px;border:1px solid #c8ead9;"><span style="color:#22c55e;font-size:14px;">✓</span><span style="font-size:12px;font-weight:600;color:#1a2420;">Chamber networking</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- All members -->
+        <div id="allMembersSection" style="background:#fff;border:1px solid #e3e8e5;border-radius:20px;padding:24px;box-shadow:0 2px 12px rgba(15,110,81,.07);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div>
+              <h2 style="font-size:18px;font-weight:800;color:#0a4f3a;margin:0 0 4px;">🏅 All Active Chamber Members</h2>
+              <p style="font-size:13px;color:#5b6b64;margin:0;">All verified members of Tirur Chamber of Commerce</p>
+            </div>
+            <button onclick="loadAllMembers()" style="background:#f0faf5;border:1.5px solid #c8ead9;color:#0a4f3a;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;">↻ Refresh</button>
+          </div>
+          <div style="height:1px;background:#e8f2ee;margin:16px 0;"></div>
+          <div id="allMembersGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SIGNED OUT ── -->
+  <section class="section" id="guestSection" style="display:none;">
+    <div class="container" style="max-width:520px;">
+      <div class="card" id="guestCard"></div>
+    </div>
+  </section>
+</main>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+renderChrome('membership');
+
+const card     = document.getElementById('myStatusCard');
+const formCard = document.getElementById('regFormCard');
+let state = { user: null, business: null, membership: null, qr: null };
+
+/* ── helpers ── */
+function safe(v){
+  if(v === undefined || v === null || v === '') return '&mdash;';
+  return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+function formatDate(v){ return v ? new Date(v).toLocaleDateString('en-IN',{year:'numeric',month:'long',day:'numeric'}) : '&mdash;'; }
+function buildPublicUrl(publicId){ return `${window.location.origin}/chamber-member-profile.html?publicId=${encodeURIComponent(publicId)}`; }
+
+async function ownerRequest(path, options={}){ return apiRequest(`/shop-owner${path}`, options); }
+async function memberRequest(path, options={}){ return apiRequest(`/chamber-member${path}`, options); }
+
+/* ── show/hide sections ── */
+function showOwner(){ document.getElementById('ownerSection').style.display=''; document.getElementById('memberSection').style.display='none'; document.getElementById('guestSection').style.display='none'; }
+function showMember(){ document.getElementById('ownerSection').style.display='none'; document.getElementById('memberSection').style.display=''; document.getElementById('guestSection').style.display='none'; document.getElementById('topNotice').style.display='none'; }
+function showGuest(){ document.getElementById('ownerSection').style.display='none'; document.getElementById('memberSection').style.display='none'; document.getElementById('guestSection').style.display=''; }
+
+/* ══════════════════════════════════
+   SHOP OWNER FLOW
+══════════════════════════════════ */
+function renderSignedOut(){
+  showGuest();
+  document.getElementById('guestCard').innerHTML = `
+    <h3 style="font-size:14.5px;">Your Membership Status</h3>
+    <div class="empty-state" style="padding:20px 8px;">
+      <div class="ic">&#127941;</div>
+      <p>Please sign in with an active Shop Owner account to apply for Chamber Membership.</p>
+      <a href="login.html" class="btn btn-primary mt-8">Login</a>
+      <a href="login.html?register=shop_owner" class="btn btn-outline mt-8">Create Shop Owner Account</a>
+    </div>`;
+}
+
+function renderNoBusiness(){
+  showOwner();
+  formCard.style.display = 'none';
+  card.innerHTML = `
+    <h3 style="font-size:14.5px;">Your Membership Status</h3>
+    <div class="empty-state" style="padding:20px 8px;">
+      <div class="ic">&#127970;</div>
+      <p>Create your business profile before submitting a Chamber Membership application.</p>
+      <a href="shop-owner.html" class="btn btn-primary mt-8">Set Up Business Profile</a>
+    </div>`;
+}
+
+function renderEmptyStatus(){
+  card.innerHTML = `
+    <h3 style="font-size:14.5px;">Your Membership Status</h3>
+    <div class="empty-state" style="padding:20px 8px;">
+      <div class="ic">&#127941;</div>
+      <p>No application on file yet.</p>
+      <p class="text-soft">Fill the form to get started.</p>
+    </div>`;
+}
+
+function renderIdCard(qr, membership){
+  if(!qr || !qr.publicId) return `
+    <div style="background:#f5f9f7;border:1px dashed #c8ead9;border-radius:16px;padding:24px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">🎖️</div>
+      <p style="color:#5b6b64;font-size:13px;margin:0;">Your QR ID card will be activated once the Chamber office approves your membership.</p>
+    </div>`;
+
+  const publicUrl = qr.publicUrl || buildPublicUrl(qr.publicId);
+  const imgSrc    = qr.imageDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=2&data=${encodeURIComponent(publicUrl)}`;
+  const expiry    = formatDate(membership.membershipExpiryDate || membership.expiresAt);
+  const memberNum = safe(qr.membershipNumber || membership.membershipNumber || 'Active');
+  const bizName   = safe(membership.businessName || '—');
+  const category  = safe(membership.category || '');
+  const owner     = safe(membership.ownerName || '—');
+  const phone     = safe(membership.phone || '—');
+  const plan      = safe(membership.plan || '—');
+
+  return `
+  <div style="
+    background:linear-gradient(145deg,#0a4f3a 0%,#0f6e51 55%,#1a9e74 100%);
+    border-radius:20px; overflow:hidden; box-shadow:0 16px 48px rgba(10,79,58,.35);
+    max-width:400px; position:relative; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  ">
+    <!-- decorative circles -->
+    <div style="position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:rgba(255,255,255,.06);border-radius:50%;pointer-events:none;"></div>
+    <div style="position:absolute;bottom:-60px;left:-30px;width:200px;height:200px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none;"></div>
+
+    <!-- Header -->
+    <div style="padding:18px 20px 14px;position:relative;z-index:1;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="width:36px;height:36px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🏛️</div>
+        <div>
+          <div style="color:rgba(255,255,255,.95);font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;line-height:1.2;">Tirur Chamber of Commerce</div>
+          <div style="color:rgba(255,255,255,.55);font-size:10px;font-weight:600;">Official Membership Card</div>
+        </div>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(34,197,94,.22);border:1px solid rgba(34,197,94,.45);border-radius:30px;padding:5px 14px;">
+        <span style="width:8px;height:8px;background:#4ade80;border-radius:50%;box-shadow:0 0 0 2px rgba(74,222,128,.3);flex-shrink:0;display:inline-block;"></span>
+        <span style="color:#fff;font-size:11px;font-weight:800;letter-spacing:.05em;">✓ VERIFIED MEMBER</span>
+      </div>
+    </div>
+
+    <!-- Business name block -->
+    <div style="padding:0 20px 14px;position:relative;z-index:1;">
+      <div style="font-size:22px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:4px;">${bizName}</div>
+      <div style="display:inline-block;background:rgba(255,255,255,.18);color:rgba(255,255,255,.9);font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;letter-spacing:.04em;">${category}</div>
+    </div>
+
+    <!-- White body -->
+    <div style="background:#fff;margin:0 12px;border-radius:14px 14px 0 0;padding:16px;position:relative;z-index:1;">
+
+      <!-- QR + details row -->
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <!-- QR box -->
+        <div style="flex-shrink:0;background:#f5f9f7;border:1.5px solid #c8ead9;border-radius:12px;padding:8px;width:100px;height:100px;display:flex;align-items:center;justify-content:center;">
+          <img src="${imgSrc}" alt="QR" style="width:84px;height:84px;display:block;border-radius:4px;">
+        </div>
+        <!-- Info -->
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:18px;font-weight:800;color:#0a4f3a;letter-spacing:.04em;margin-bottom:3px;">${memberNum}</div>
+          <div style="font-size:11.5px;color:#5b6b64;margin-bottom:2px;">Owner: <b style="color:#1a2420;">${owner}</b></div>
+          <div style="font-size:11.5px;color:#5b6b64;margin-bottom:2px;">Phone: <b style="color:#1a2420;">${phone}</b></div>
+          <div style="font-size:11.5px;color:#5b6b64;margin-bottom:2px;">Plan: <b style="color:#0f6e51;">${plan}</b></div>
+          <div style="font-size:10.5px;color:#8fa89e;margin-top:4px;">📲 Scan to verify</div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="height:1px;background:#e8f2ee;margin:14px 0;"></div>
+
+      <!-- Validity row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Valid Until</div>
+          <div style="font-size:13.5px;font-weight:800;color:#0a4f3a;">${expiry}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;background:#e6f4ef;border-radius:20px;padding:6px 14px;">
+          <span style="width:7px;height:7px;background:#22c55e;border-radius:50%;display:inline-block;"></span>
+          <span style="font-size:11px;font-weight:800;color:#0a4f3a;">Active QR</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer strip -->
+    <div style="background:#f0faf4;margin:0 12px;border-radius:0 0 14px 14px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;">
+      <div style="font-size:10.5px;color:#5b6b64;font-weight:700;">🏛️ Tirur Connect <span style="opacity:.6;font-weight:500;">· Tirur, Kerala</span></div>
+      <div style="font-size:10px;color:#8fa89e;">Chamber Verified</div>
+    </div>
+
+    <!-- Bottom padding -->
+    <div style="height:12px;"></div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;gap:8px;padding:0 12px 16px;position:relative;z-index:1;">
+      <a href="${publicUrl}" target="_blank" rel="noopener"
+        style="flex:1;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;border-radius:10px;padding:10px;font-size:13px;font-weight:700;text-align:center;text-decoration:none;display:block;">
+        🌐 View Profile
+      </a>
+      <button onclick="downloadQr('${imgSrc}','${memberNum}')"
+        style="flex:1;background:#fff;border:none;color:#0a4f3a;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">
+        ⬇️ Download QR
+      </button>
+    </div>
+  </div>`;
+}
+
+function downloadQr(src, num){
+  const link = document.createElement('a');
+  link.href = src; link.download = `${num}-chamber-qr.png`; link.click();
+}
+
+function renderOwnerStatus(){
+  const membership = state.membership;
+  if(!membership) return;
+  formCard.style.display = 'none';
+  let statusBlock = '';
+  if(membership.status === 'pending'){
+    statusBlock = `
+      <div style="background:#fff8e8; border:1px dashed var(--accent-dark); border-radius:10px; padding:14px; margin-top:12px;">
+        <p style="font-weight:700; color:#7a5400; margin-bottom:4px;">&#8987; Application Under Review</p>
+        <p class="text-soft">Your Chamber Membership application has been submitted. The Chamber admin team will review and approve it. You will receive a notification once approved, and your QR ID card will be activated automatically.</p>
+      </div>`;
+  } else if(membership.status === 'active'){
+    statusBlock = `<p class="text-soft mt-8">Valid until <b>${formatDate(membership.membershipExpiryDate || membership.expiresAt)}</b>.</p>${renderIdCard(state.qr, membership)}`;
+  } else if(membership.status === 'expired'){
+    statusBlock = '<p class="text-soft mt-8" style="color:var(--danger);">This membership has expired. Please contact the Chamber office to renew it.</p>';
+  } else if(membership.status === 'rejected' || membership.status === 'suspended'){
+    statusBlock = `<p class="text-soft mt-8" style="color:var(--danger);">This application is ${safe(membership.status)}. Please contact the Chamber office for assistance.</p>`;
+  }
+  card.innerHTML = `
+    <div class="flex-between">
+      <h3 style="font-size:14.5px;">Your Membership Status</h3>
+      <span class="status ${safe(membership.status)}">${safe(membership.status).toUpperCase()}</span>
+    </div>
+    <p style="font-weight:700; margin-top:8px;">${safe(membership.businessName)}</p>
+    <p class="text-soft">${safe(membership.plan)}</p>
+    ${statusBlock}`;
+}
+
+function fillBusiness(){
+  const b = state.business;
+  document.getElementById('f_bizname').value = b.name || b.businessName || '';
+  document.getElementById('f_owner').value   = state.user.name || '';
+  document.getElementById('f_email').value   = b.email || state.user.email || '';
+  document.getElementById('f_phone').value   = b.phone || state.user.phone || '';
+  document.getElementById('f_cat').value     = b.category || '';
+}
+
+async function submitApplication(){
+  const button = document.getElementById('submitButton');
+  button.disabled = true; button.textContent = 'Submitting...';
+  try {
+    const plan = document.getElementById('f_plan').value;
+    const orderResult = await ownerRequest('/membership/payment/order', { method:'POST', body:JSON.stringify({ plan }) });
+    if(!orderResult.mock){
+      if(typeof Razorpay === 'undefined') throw new Error('Payment checkout is unavailable. Please try again.');
+      const payment = await new Promise((resolve, reject) => {
+        const checkout = new Razorpay({
+          key: orderResult.keyId, amount: orderResult.order.amount, currency: orderResult.order.currency,
+          name: 'Tirur Chamber of Commerce', description: `${plan} membership application`,
+          prefill: { name: state.user.name, email: state.user.email, contact: state.user.phone },
+          theme: { color: '#0e7959' },
+          handler: resolve,
+          modal: { ondismiss: () => reject(new Error('Payment was cancelled.')) },
+        });
+        checkout.on('payment.failed', () => reject(new Error('Payment failed. Please try again.')));
+        checkout.open();
+      });
+      await ownerRequest('/membership/payment/verify', { method:'POST', body:JSON.stringify(payment) });
+    }
+    const result = await ownerRequest('/membership', { method:'POST', body:JSON.stringify({ plan, paymentOrderId: orderResult.order.id }) });
+    state.membership = result.membership;
+    toast('Application submitted for Chamber review.');
+    renderOwnerStatus();
+  } catch(error){
+    toast(error.message || 'Unable to submit the application.');
+  } finally {
+    button.disabled = false; button.textContent = 'Submit Application →';
+  }
+}
+
+async function loadOwnerPage(){
+  showOwner();
+  try {
+    const [profile, businessResult, membershipResult] = await Promise.all([
+      ownerRequest('/profile'), ownerRequest('/business'), ownerRequest('/membership')
+    ]);
+    state.user       = profile.user;
+    state.business   = businessResult.business;
+    state.membership = membershipResult.membership;
+    if(!state.business) return renderNoBusiness();
+    fillBusiness();
+    if(state.membership && state.membership.status === 'active'){
+      try { state.qr = (await ownerRequest('/qr')).qr; } catch(e){ state.qr = null; }
+    }
+    if(state.membership) renderOwnerStatus();
+    else {
+      renderEmptyStatus();
+      if(typeof Razorpay === 'undefined'){
+        const note = document.getElementById('paymentNote');
+        if(note) note.style.display = 'block';
+      }
+    }
+  } catch(error){
+    renderSignedOut();
+  }
+}
+
+/* ══════════════════════════════════
+   CHAMBER MEMBER FLOW
+══════════════════════════════════ */
+function scrollToMembers(){ document.getElementById('allMembersSection')?.scrollIntoView({behavior:'smooth',block:'start'}); }
+
+async function loadMemberPage(){
+  showMember();
+  try {
+    const [membershipRes, qrRes] = await Promise.all([
+      memberRequest('/membership'),
+      memberRequest('/qr'),
+    ]);
+    const membership = membershipRes.membership;
+    const qr = qrRes.qr;
+
+    /* Hero */
+    if(membership){
+      const heroName = document.getElementById('heroBizName');
+      const heroCat  = document.getElementById('heroCategoryLine');
+      if(heroName) heroName.textContent = membership.businessName || 'Chamber Member';
+      if(heroCat)  heroCat.textContent  = `${membership.category || 'Business'} · Tirur Chamber of Commerce`;
+      /* Stats strip */
+      const sNum  = document.getElementById('statMemberNum');
+      const sPlan = document.getElementById('statPlan');
+      const sStat = document.getElementById('statStatus');
+      const sExp  = document.getElementById('statExpiry');
+      if(sNum)  sNum.textContent  = membership.membershipNumber || 'Pending';
+      if(sPlan){
+        // short plan label
+        const planStr = membership.plan || '';
+        sPlan.textContent = planStr.includes('Silver') ? 'Silver' : planStr.includes('Gold') ? 'Gold' : planStr.includes('Platinum') ? 'Platinum' : planStr || '—';
+      }
+      if(sStat){
+        sStat.textContent = (membership.status || '').toUpperCase();
+        sStat.style.color = membership.status === 'active' ? '#22c55e' : '#f2a900';
+      }
+      if(sExp){
+        const expDate = membership.membershipExpiryDate;
+        sExp.textContent = expDate ? new Date(expDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+      }
+    }
+
+    /* Info card */
+    const infoEl = document.getElementById('memberInfoCard');
+    if(membership){
+      infoEl.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="font-size:15px;font-weight:800;color:#0a4f3a;">🎖️ My Membership</div>
+          <span style="background:${membership.status==='active'?'#e4f7e9':'#fff3de'};color:${membership.status==='active'?'#137a3f':'#8a5a00'};font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;">${safe(membership.status).toUpperCase()}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          ${[
+            {label:'Business',value:membership.businessName},
+            {label:'Owner',value:membership.ownerName},
+            {label:'Phone',value:membership.phone},
+            {label:'Email',value:membership.email},
+            {label:'Category',value:membership.category},
+            {label:'Member Since',value:membership.membershipStartDate ? new Date(membership.membershipStartDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—'},
+          ].map(f=>`
+            <div style="background:#f8fcfa;border-radius:10px;padding:10px 12px;">
+              <div style="font-size:10px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">${f.label}</div>
+              <div style="font-size:13px;font-weight:700;color:#1a2420;word-break:break-word;">${safe(f.value||'—')}</div>
+            </div>`).join('')}
+        </div>
+        <a href="chamber-member.html" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#0f6e51;color:#fff;border-radius:12px;padding:13px;font-size:14px;font-weight:800;text-decoration:none;">🏅 Open Member Dashboard →</a>`;
+    } else {
+      infoEl.innerHTML = '<p style="color:#5b6b64;padding:12px;">No membership record found.</p>';
+    }
+
+    /* ID card */
+    const idEl = document.getElementById('memberIdCard');
+    if(membership && qr){
+      idEl.innerHTML = renderIdCard(qr, membership);
+    } else {
+      idEl.innerHTML = `
+        <div style="background:#f5f9f7;border:1.5px dashed #c8ead9;border-radius:20px;padding:36px 24px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:12px;">🎖️</div>
+          <p style="font-size:14px;font-weight:700;color:#0a4f3a;margin:0 0 6px;">QR ID Card Pending</p>
+          <p style="font-size:12.5px;color:#5b6b64;margin:0;">Your verified QR ID card will activate once the Chamber office approves your membership.</p>
+        </div>`;
+    }
+  } catch(e){
+    document.getElementById('memberInfoCard').innerHTML = '<p style="color:#5b6b64;padding:12px;">Unable to load membership data.</p>';
+  }
+
+  /* Responsive: stack on mobile */
+  if(window.innerWidth < 768){
+    const row = document.getElementById('memberTopRow');
+    if(row) row.style.gridTemplateColumns = '1fr';
+  }
+
+  loadAllMembers();
+}
+
+async function loadAllMembers(){
+  const grid = document.getElementById('allMembersGrid');
+  if(!grid) return;
+  grid.innerHTML = '<p class="text-soft">Loading members&hellip;</p>';
+  try {
+    const result = await memberRequest('/all-active-members');
+    const members = result.members || [];
+    const myMembershipNum = state.membership?.membershipNumber || '';
+    if(!members.length){
+      grid.innerHTML = '<div class="empty-state"><div class="ic">&#127941;</div><p>No active Chamber Members found.</p></div>';
+      return;
+    }
+    grid.innerHTML = members.map(m => {
+      const publicId   = m.qrCode || '';
+      const profileUrl = publicId ? `chamber-member-profile.html?publicId=${encodeURIComponent(publicId)}` : '';
+      const expiry     = m.membershipExpiryDate ? new Date(m.membershipExpiryDate).toLocaleDateString('en-IN') : '—';
+      const qrImgSrc   = publicId ? `https://api.qrserver.com/v1/create-qr-code/?size=80x80&margin=1&data=${encodeURIComponent(window.location.origin+'/chamber-member-profile.html?publicId='+encodeURIComponent(publicId))}` : '';
+      const isMe       = myMembershipNum && m.membershipNumber === myMembershipNum;
+      const logoHtml   = m.logo
+        ? `<img src="${safe(m.logo)}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;">`
+        : `<span style="font-size:22px;">🏪</span>`;
+
+      return `
+        <div style="
+          background:#fff;
+          border:${isMe ? '2px solid #0f6e51' : '1px solid #e3e8e5'};
+          border-radius:16px;
+          overflow:hidden;
+          box-shadow:${isMe ? '0 0 0 3px #e6f4ef, 0 4px 16px rgba(15,110,81,.12)' : '0 2px 10px rgba(15,110,81,.07)'};
+          font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;
+          transition:.2s ease;
+        ">
+          <!-- Card top bar -->
+          <div style="height:4px;background:linear-gradient(90deg,#0a4f3a,#1a9e74);"></div>
+
+          <div style="padding:14px 14px 0;">
+            <!-- Business identity -->
+            <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+              <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#e6f4ef,#c8ead9);border:1.5px solid #c8ead9;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+                ${logoHtml}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:800;color:#0a4f3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  ${safe(m.businessName)}
+                  ${isMe ? '<span style="font-size:9px;background:#0f6e51;color:#fff;padding:2px 7px;border-radius:20px;vertical-align:middle;margin-left:4px;font-weight:700;">YOU</span>' : ''}
+                </div>
+                <div style="display:inline-block;background:#e6f4ef;color:#0f6e51;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;margin-top:3px;">${safe(m.category || '—')}</div>
+              </div>
+            </div>
+
+            <!-- Details -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+              <div style="background:#f8fcfa;border-radius:8px;padding:7px 9px;">
+                <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Owner</div>
+                <div style="font-size:12px;font-weight:700;color:#1a2420;">${safe(m.ownerName)}</div>
+              </div>
+              <div style="background:#f8fcfa;border-radius:8px;padding:7px 9px;">
+                <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Phone</div>
+                <div style="font-size:12px;font-weight:700;color:#1a2420;">${safe(m.phone || '—')}</div>
+              </div>
+              <div style="background:#f8fcfa;border-radius:8px;padding:7px 9px;">
+                <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Member No.</div>
+                <div style="font-size:12px;font-weight:700;color:#0a4f3a;">${safe(m.membershipNumber || 'Active')}</div>
+              </div>
+              <div style="background:#f8fcfa;border-radius:8px;padding:7px 9px;">
+                <div style="font-size:9.5px;font-weight:700;color:#8fa89e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Valid Until</div>
+                <div style="font-size:12px;font-weight:700;color:#1a2420;">${expiry}</div>
+              </div>
+            </div>
+
+            <!-- QR row -->
+            ${qrImgSrc ? `
+            <div style="display:flex;align-items:center;gap:10px;background:#f5f9f7;border-radius:10px;padding:8px 10px;margin-bottom:10px;">
+              <img src="${safe(qrImgSrc)}" alt="QR" style="width:48px;height:48px;border-radius:7px;border:1px solid #c8ead9;background:#fff;padding:2px;">
+              <div>
+                <div style="font-size:11px;font-weight:700;color:#0a4f3a;margin-bottom:2px;">✓ Verified QR Identity</div>
+                <div style="font-size:10px;color:#8fa89e;">Scan to verify membership</div>
+              </div>
+            </div>` : ''}
+          </div>
+
+          <!-- Action footer -->
+          <div style="padding:0 14px 14px;display:flex;gap:6px;">
+            ${profileUrl ? `<a href="${safe(profileUrl)}" target="_blank" rel="noopener"
+              style="flex:1;display:block;text-align:center;padding:9px;background:#0f6e51;color:#fff;border-radius:9px;font-size:12px;font-weight:700;text-decoration:none;">
+              View Profile
+            </a>` : ''}
+            ${m.website ? `<a href="${safe(m.website)}" target="_blank" rel="noopener"
+              style="flex:1;display:block;text-align:center;padding:9px;background:#fff;color:#0f6e51;border:1.5px solid #0f6e51;border-radius:9px;font-size:12px;font-weight:700;text-decoration:none;">
+              Website
+            </a>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e){
+    grid.innerHTML = '<p class="text-soft">Unable to load members.</p>';
+  }
+}
+
+/* ══════════════════════════════════
+   ENTRY POINT
+══════════════════════════════════ */
+async function loadPage(){
+  const session = getSession();
+  if(!session){ return renderSignedOut(); }
+
+  if(session.role === 'chamber_member' && session.status === 'active'){
+    /* Load own membership for "YOU" badge */
+    try { const r = await memberRequest('/membership'); state.membership = r.membership; } catch(e){}
+    return loadMemberPage();
+  }
+
+  if(session.role === 'shop_owner' && session.status === 'active'){
+    return loadOwnerPage();
+  }
+
+  /* Any other role — show guest screen */
+  renderSignedOut();
+}
+
+loadPage();
+</script>
+</body>
+</html>

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Tirur Connect</title>
+<link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<div id="guardScreen" style="display:none;">
+  <div class="container" style="max-width:420px; padding-top:60px; text-align:center;">
+    <div style="font-size:40px;">🔒</div>
+    <h2>Admin Access Only</h2>
+    <p class="text-soft">Please log in as an Administrator to view this dashboard.</p>
+    <a href="login.html" class="btn btn-primary mt-12">Go to Login</a>
+  </div>
+</div>
+
+<div id="dashboardScreen" style="display:none;">
+  <div class="container" style="padding-top:16px;">
+    <h1 style="font-size:19px;">Admin Dashboard</h1>
+    <p class="text-soft">Central control panel — approve members, listings, jobs &amp; manage advertisements</p>
+  </div>
+
+  <div class="admin-shell container">
+    <aside class="admin-sidebar">
+      <a data-panel="overview" class="active">📊 Overview</a>
+      <a data-panel="users">👥 User Accounts</a>
+      <a data-panel="listings">📋 Listing Submissions <span class="hide-mobile" style="font-size:10px;color:var(--accent-dark);">FREE</span></a>
+      <a data-panel="members">🎖️ Membership Applications <span class="hide-mobile" style="font-size:10px;color:var(--brand);">PAID</span></a>
+      <a data-panel="directory">🏪 Live Directory</a>
+      <a data-panel="jobs">💼 Job Postings</a>
+      <a data-panel="applications">📝 Job Applications</a>
+      <a data-panel="resumes">📄 Uploaded CVs</a>
+      <!-- <a data-panel="news">📰 News</a> -->
+      <!-- <a data-panel="offers">🏷️ Offers</a> -->
+      <a data-panel="ads">📢 Advertisements</a>
+    </aside>
+
+    <div class="admin-main">
+      <div class="admin-tabs">
+        <button data-panel="overview" class="active">Overview</button>
+          <button data-panel="users">Users</button>
+        <button data-panel="listings">Listings (Free)</button>
+        <button data-panel="members">Membership (Paid)</button>
+        <button data-panel="directory">Directory</button>
+        <button data-panel="jobs">Jobs</button>
+        <button data-panel="applications">Applications</button>
+        <button data-panel="resumes">CVs</button>
+        <button data-panel="news">News</button>
+        <button data-panel="offers">Offers</button>
+        <button data-panel="ads">Ads</button>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div class="admin-panel active" id="panel-overview">
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="card mt-16">
+          <h3 style="font-size:14.5px;">Pending Actions</h3>
+          <div id="pendingList"></div>
+        </div>
+      </div>
+
+      <!-- USER ACCOUNTS -->
+      <div class="admin-panel" id="panel-users">
+        <h3 style="font-size:15px; margin-bottom:10px;">👥 User Accounts</h3>
+        <p class="text-soft" style="margin-bottom:10px;">Activate newly registered Job Seeker and Shop Owner accounts before they can log in.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="usersTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FREE LISTING SUBMISSIONS (Kakkur-style "list your number/shop") -->
+      <div class="admin-panel" id="panel-listings">
+        <div class="flex-between mt-8" style="margin-bottom:10px;">
+          <h3 style="font-size:15px;">📋 Free Listing Submissions</h3>
+        </div>
+        <p class="text-soft" style="margin-bottom:10px;">Submitted via the public "List Your Business / Number" form. These are <b>not</b> Chamber members — approving one simply publishes it to the free public directory.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Category</th><th>Details</th><th>Location</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="listingsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MEMBERS -->
+      <div class="admin-panel" id="panel-members">
+        <div class="flex-between mt-8" style="margin-bottom:10px;">
+          <h3 style="font-size:15px;">🎖️ Chamber of Commerce Membership Applications</h3>
+        </div>
+        <p class="text-soft" style="margin-bottom:10px;">Paid membership applications — approving one activates directory priority, job postings, resume access &amp; ad eligibility for one year.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Business</th><th>Owner</th><th>Plan</th><th>Applied</th><th>Expires</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="membersTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DIRECTORY -->
+      <div class="admin-panel" id="panel-directory">
+        <h3 style="font-size:15px; margin-bottom:10px;">Directory Listings</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Business</th><th>Category</th><th>Hours</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="directoryTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- JOBS -->
+      <div class="admin-panel" id="panel-jobs">
+        <h3 style="font-size:15px; margin-bottom:10px;">Job Postings Moderation</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Title</th><th>Company</th><th>Type</th><th>Applicants</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="jobsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+        <div class="admin-panel" id="panel-applications">
+          <h3 style="font-size:15px; margin-bottom:10px;">📝 Job Applications</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Candidate</th><th>Job</th><th>Business</th><th>Education</th><th>Experience</th><th>Applied</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="applicationsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+          <div class="admin-panel" id="panel-news">
+            <h3 style="font-size:15px; margin-bottom:10px;">📰 News</h3>
+            <div class="form-card">
+              <div class="grid cols-2">
+                <input id="news_id" type="hidden">
+                <div class="form-group"><label>Title</label><input id="news_title"></div>
+                <div class="form-group"><label>Category</label><input id="news_category"></div>
+                <div class="form-group"><label>Description</label><textarea id="news_description"></textarea></div>
+                <div class="form-group"><label>Image</label><input id="news_image" type="url"></div>
+                <div class="form-group" style="grid-column:1 / -1;"><label>Content</label><textarea id="news_content"></textarea></div>
+                <div class="form-group"><label>Status</label><select id="news_status"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></div>
+              </div>
+              <button class="btn btn-primary" onclick="saveNews()">Save News</button>
+              <button class="btn btn-primary" onclick="saveNews(true)">Save &amp; Publish</button>
+            </div>
+            <div class="table-wrap mt-16"><table><thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="newsTable"></tbody></table></div>
+          </div>
+
+          <div class="admin-panel" id="panel-offers">
+            <h3 style="font-size:15px; margin-bottom:10px;">🏷️ Offers</h3>
+            <div class="form-card">
+              <div class="grid cols-2">
+                <input id="offer_id" type="hidden">
+                <div class="form-group"><label>Title</label><input id="offer_title"></div>
+                <div class="form-group"><label>Category</label><select id="offer_category"><option value="education">Education</option><option value="electronics">Electronics</option><option value="food">Food</option><option value="coffee">Coffee</option><option value="offers">Offers</option><option value="local">Local</option></select></div>
+                <div class="form-group"><label>Description</label><textarea id="offer_description"></textarea></div>
+                <div class="form-group"><label>Image</label><input id="offer_image" type="url"></div>
+                <div class="form-group"><label>Link</label><input id="offer_link" type="url"></div>
+                <div class="form-group"><label>Start Date</label><input id="offer_start" type="date"></div>
+                <div class="form-group"><label>End Date</label><input id="offer_end" type="date"></div>
+                <div class="form-group"><label>Status</label><select id="offer_status"><option value="draft">Draft</option><option value="published">Published</option><option value="expired">Expired</option></select></div>
+              </div>
+              <button class="btn btn-primary" onclick="saveOffer()">Save Offer</button>
+              <button class="btn btn-primary" onclick="saveOffer(true)">Save &amp; Publish</button>
+            </div>
+            <div class="table-wrap mt-16"><table><thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Dates</th><th>Actions</th></tr></thead><tbody id="offersTable"></tbody></table></div>
+          </div>
+
+      <!-- ADS -->
+      <div class="admin-panel" id="panel-ads">
+        <div class="flex-between" style="margin-bottom:10px;">
+          <h3 style="font-size:15px;">Ads Management</h3>
+          <button class="btn btn-primary btn-sm" onclick="resetAdForm()">+ Create New Ad</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Placement</th><th>Status</th><th>Start</th><th>End</th><th>Order</th><th>Actions</th></tr></thead>
+            <tbody id="adsTable"></tbody>
+          </table>
+        </div>
+        <div class="form-card mt-16" id="adEditor">
+          <h3 style="font-size:14.5px;" id="adEditorTitle">➕ Create New Ad</h3>
+          <input type="hidden" id="ad_id">
+          <div class="grid cols-2">
+            <div class="form-group"><label>Title</label><input type="text" id="ad_title" placeholder="Ad title"></div>
+            <div class="form-group"><label>Subtitle</label><input type="text" id="ad_subtitle" placeholder="Short supporting text"></div>
+            <div class="form-group"><label>Description</label><textarea id="ad_description" placeholder="Ad description"></textarea></div>
+            <div class="form-group"><label>Content</label><textarea id="ad_content" placeholder="Full advertisement content"></textarea></div>
+            <div class="form-group"><label>Category</label><select id="ad_category"></select></div>
+            <div class="form-group"><label>Badge</label><select id="ad_badge"></select></div>
+            <div class="form-group"><label>Placement</label><select id="ad_slot"><option value="homepage">Homepage Banner</option><option value="sidebar-left">Left Sidebar</option><option value="sidebar-right">Right Sidebar</option><option value="directory">Directory Page</option></select></div>
+            <div class="form-group"><label>Display Order</label><input type="number" id="ad_order" min="0" step="1" value="0"></div>
+            <div class="form-group"><label>Start Date &amp; Time</label><input type="datetime-local" id="ad_start"></div>
+            <div class="form-group"><label>End Date &amp; Time</label><input type="datetime-local" id="ad_end"></div>
+            <div class="form-group"><label>Image URL</label><input type="url" id="ad_image" placeholder="https://..."></div>
+            <div class="form-group"><label>Upload Image</label><input type="file" id="ad_upload" accept="image/*"></div>
+            <div class="form-group"><label>Link</label><input type="text" id="ad_link" placeholder="directory.html or https://..."></div>
+            <div class="form-group"><label>Status</label><select id="ad_status"><option value="draft">Draft</option><option value="published">Published</option><option value="unpublished">Unpublished</option></select></div>
+          </div>
+          <label class="flex gap-8" style="align-items:center; margin:4px 0 12px;"><input type="checkbox" id="ad_enabled" checked> Enabled</label>
+          <button class="btn btn-primary" onclick="saveAdFromForm()">Save Advertisement</button>
+          <button class="btn btn-primary" onclick="saveAdFromForm(true)">Save &amp; Publish</button>
+          <button class="btn btn-outline" onclick="resetAdForm()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-resumes"><h3 style="font-size:15px; margin-bottom:10px;">📄 Uploaded Candidate CVs</h3><div id="adminResumes"></div></div>
+
+    </div>
+  </div>
+</div>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+renderChrome('admin');
+
+async function verifyAdminAccess(){
+  const token = getAuthToken();
+  if(!token){
+    window.location.href = 'login.html';
+    return;
+  }
+
+  try{
+    const response = await fetch('http://localhost:5001/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await response.json().catch(()=>({}));
+    if(response.status === 401 || !response.ok && response.status !== 403){
+      clearAuthSession();
+      window.location.href = 'login.html';
+      return;
+    }
+    if(response.status === 403 || !data.user || data.user.role !== 'admin' || data.user.status !== 'active'){
+      clearAuthSession();
+      window.location.href = 'index.html';
+      return;
+    }
+    saveAuthSession(token, data.user);
+    document.getElementById('dashboardScreen').style.display = 'block';
+    await initAdmin();
+  }catch(error){
+    window.location.href = 'login.html';
+  }
+}
+
+verifyAdminAccess();
+
+function switchPanel(name){
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.toggle('active', p.id === 'panel-'+name));
+  document.querySelectorAll('.admin-sidebar a, .admin-tabs button').forEach(el=>el.classList.toggle('active', el.dataset.panel === name));
+}
+document.querySelectorAll('.admin-sidebar a, .admin-tabs button').forEach(el=>{
+  el.addEventListener('click', ()=> switchPanel(el.dataset.panel));
+});
+
+function catLabel(id){ 
+  const categories = {
+    'retail': 'Retail',
+    'restaurant': 'Restaurant & Food',
+    'healthcare': 'Healthcare',
+    'education': 'Education',
+    'automotive': 'Automotive',
+    'beauty': 'Beauty & Wellness',
+    'professional': 'Professional Services',
+    'technology': 'Technology',
+    'finance': 'Finance & Insurance',
+    'real-estate': 'Real Estate',
+    'entertainment': 'Entertainment',
+    'sports': 'Sports & Recreation',
+    'travel': 'Travel & Tourism',
+    'manufacturing': 'Manufacturing',
+    'construction': 'Construction',
+    'other': 'Other'
+  };
+  return categories[id] || id || 'Uncategorized';
+}
+
+async function initAdmin(){
+  await renderOverview();
+  await renderUsers();
+  await renderListings();
+  await renderMembers();
+  await renderDirectory();
+  await renderJobs();
+  await renderApplications();
+  await renderResumeDirectory('adminResumes');
+  await renderNews();
+  await renderOffers();
+  populateAdOptions();
+  resetAdForm();
+  await renderAds();
+}
+
+/* ---------- User Accounts ---------- */
+async function renderUsers(){
+  try{
+    const result = await apiRequest('/admin/users?limit=100');
+    const users = result.data || [];
+    document.getElementById('usersTable').innerHTML = users.length ? users.map(user => `
+      <tr>
+        <td><b>${escapeAdHtml(user.name)}</b></td>
+        <td>${escapeAdHtml(user.email)}</td>
+        <td>${escapeAdHtml(user.phone || '—')}</td>
+        <td>${escapeAdHtml(user.role)}</td>
+        <td><span class="status ${user.status === 'active' ? 'active' : (user.status === 'rejected' || user.status === 'suspended' ? 'declined' : 'pending')}">${escapeAdHtml(user.status.toUpperCase())}</span></td>
+        <td>${user.role !== 'admin' && user.status !== 'active' ? `<button class="btn btn-primary btn-sm" onclick="setUserStatus('${user._id}','active')">Activate</button>` : ''}${user.role !== 'admin' && user.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="setUserStatus('${user._id}','suspended')">Suspend</button>` : ''}</td>
+      </tr>
+    `).join('') : '<tr><td colspan="6" class="text-soft">No user accounts found.</td></tr>';
+  }catch(error){
+    document.getElementById('usersTable').innerHTML = '<tr><td colspan="6" class="text-soft">Unable to load user accounts.</td></tr>';
+  }
+}
+async function setUserStatus(id, status){
+  try{
+    await apiRequest(`/admin/users/${id}/status`, { method:'PATCH', body:JSON.stringify({ status }) });
+    await renderUsers();
+    renderOverview();
+    toast(`User ${status === 'active' ? 'activated' : 'suspended'}.`);
+  }catch(error){ toast(error.message || 'Unable to update user status.'); }
+}
+
+/* ---------- Free Listing Submissions (uses live API) ---------- */
+async function renderListings(){
+  const table = document.getElementById('listingsTable');
+  try{
+    const response = await apiRequest('/admin/businesses?page=1&limit=100');
+    const listings = response.data || [];
+    
+    if(!listings.length){
+      table.innerHTML = '<tr><td colspan="8" class="text-soft">No business submissions found.</td></tr>';
+      return;
+    }
+    
+    // Sort by status - pending first
+    const sortedListings = listings.sort((a,b)=> (a.status==='pending'?0:1) - (b.status==='pending'?0:1));
+    
+    table.innerHTML = sortedListings.map(l=>`
+      <tr>
+        <td><b>${l.businessName || l.name || '&mdash;'}</b></td>
+        <td>${l.phone || '&mdash;'}</td>
+        <td>${catLabel(l.category)}</td>
+        <td style="white-space:normal; max-width:220px;">${l.description || l.details || '&mdash;'}</td>
+        <td>${l.location || l.address || '&mdash;'}</td>
+        <td>${memberDate(l.createdAt)}</td>
+        <td><span class="status ${l.status==='approved'?'active':(l.status==='declined' || l.status==='rejected'?'declined':'pending')}">${String(l.status || 'pending').toUpperCase()}</span></td>
+        <td>
+          <div class="row-actions">
+            ${l.status==='pending' ? `
+              <button class="btn btn-primary btn-sm" onclick="approveBusinessListing('${l._id}')">Approve</button>
+              <button class="btn btn-danger btn-sm" onclick="declineBusinessListing('${l._id}')">Decline</button>
+            ` : `<span class="text-soft" style="font-size:11.5px;">No action</span>`}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }catch(error){
+    table.innerHTML = '<tr><td colspan="8" class="text-soft">Unable to load business submissions.</td></tr>';
+  }
+}
+
+async function approveBusinessListing(id){
+  try{
+    await apiRequest(`/admin/businesses/${id}/status`, { method:'PATCH', body:JSON.stringify({ status:'approved' }) });
+    toast('Business listing approved.');
+    renderListings(); renderOverview();
+  }catch(error){ toast(error.message || 'Unable to approve business listing.'); }
+}
+
+async function declineBusinessListing(id){
+  try{
+    await apiRequest(`/admin/businesses/${id}/status`, { method:'PATCH', body:JSON.stringify({ status:'rejected' }) });
+    toast('Business listing declined.');
+    renderListings(); renderOverview();
+  }catch(error){ toast(error.message || 'Unable to decline business listing.'); }
+}
+/* ---------- Overview ---------- */
+async function renderOverview(){
+  try{
+    const statsData = await apiRequest('/admin/dashboard');
+    const stats = [
+      { num: statsData.users.total, lbl:"Total Users" },
+      { num: statsData.users.active, lbl:"Active Users" },
+      { num: statsData.users.pending, lbl:"Pending Users" },
+      { num: statsData.businesses.approved, lbl:"Approved Businesses" },
+      { num: statsData.businesses.pending, lbl:"Pending Businesses" },
+      { num: statsData.chamberMemberships.total, lbl:"Total Chamber Members" },
+      { num: statsData.chamberMemberships.pending, lbl:"Pending Memberships" },
+      { num: statsData.chamberMemberships.active, lbl:"Active Members" },
+      { num: statsData.chamberMemberships.expired, lbl:"Expired Members" },
+      { num: statsData.chamberMemberships.suspended, lbl:"Suspended Members" },
+      { num: statsData.chamberMemberships.activeQrCodes, lbl:"Active QR Codes" }
+    ];
+    document.getElementById('statGrid').innerHTML = stats.map(s=>`
+      <div class="stat-card"><div class="num">${s.num}</div><div class="lbl">${s.lbl}</div></div>
+    `).join('');
+    const pending = statsData.users.pending + statsData.businesses.pending + statsData.jobs.pending + statsData.chamberMemberships.pending;
+    document.getElementById('pendingList').innerHTML = pending === 0
+      ? `<p class="text-soft">🎉 No pending approvals. All caught up!</p>`
+      : `<p class="text-soft">${pending} pending approval${pending === 1 ? '' : 's'} in the database.</p>`;
+  }catch(error){
+    document.getElementById('statGrid').innerHTML = `<div class="empty-state">Unable to load dashboard statistics.</div>`;
+    document.getElementById('pendingList').innerHTML = `<p class="text-soft">Unable to load dashboard data.</p>`;
+  }
+}
+
+/* ---------- Members (uses live API) ---------- */
+
+/* ---------- Live Chamber membership overrides ---------- */
+function memberStatusClass(status){
+  return status === 'active' ? 'active' : (status === 'rejected' || status === 'suspended' ? 'declined' : 'pending');
+}
+function memberDate(value){
+  return value ? new Date(value).toLocaleDateString('en-IN') : '&mdash;';
+}
+async function renderMembers(){
+  const table = document.getElementById('membersTable');
+  try{
+    const response = await apiRequest('/admin/chamber-members?page=1&limit=100');
+    const members = response.data || [];
+    if(!members.length){
+      table.innerHTML = '<tr><td colspan="7" class="text-soft">No membership applications found.</td></tr>';
+      return;
+    }
+    table.innerHTML = members.map(m=>`
+      <tr>
+        <td><b>${m.businessName || '&mdash;'}</b><br><span class="text-soft" style="font-size:11.5px;">${catLabel(m.category)}</span></td>
+        <td>${m.ownerName || '&mdash;'}<br><span class="text-soft" style="font-size:11.5px;">${m.phone || '&mdash;'}</span></td>
+        <td>${m.plan || '&mdash;'}</td>
+        <td>${memberDate(m.createdAt)}</td>
+        <td>${memberDate(m.expiresAt)}</td>
+        <td><span class="status ${memberStatusClass(m.status)}">${String(m.status || 'pending').toUpperCase()}</span></td>
+        <td><div class="row-actions">
+          <button class="btn btn-outline btn-sm" onclick="viewMember('${m._id}')">View Details</button>
+          ${m.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="approveMember('${m._id}')">Approve</button><button class="btn btn-danger btn-sm" onclick="declineMember('${m._id}')">Reject</button>` : ''}
+          ${m.status !== 'active' ? `<button class="btn btn-primary btn-sm" onclick="setMemberStatus('${m._id}','active')">Activate</button>` : `<button class="btn btn-danger btn-sm" onclick="setMemberStatus('${m._id}','suspended')">Suspend</button>`}
+          ${m.status !== 'expired' ? `<button class="btn btn-outline btn-sm" onclick="setMemberStatus('${m._id}','expired')">Mark Expired</button>` : ''}
+          ${m.status === 'active' && m.qrCode ? `<button class="btn btn-outline btn-sm" onclick="openMemberQr('${m.qrCode}')">Open QR Profile</button>` : ''}
+        </div></td>
+      </tr>
+    `).join('');
+  }catch(error){
+    table.innerHTML = '<tr><td colspan="7" class="text-soft">Unable to load membership applications.</td></tr>';
+  }
+}
+async function approveMember(id){
+  try{
+    await apiRequest(`/admin/chamber-members/${id}/status`, { method:'PATCH', body:JSON.stringify({ status:'active' }) });
+    toast('Membership approved and QR verification activated.');
+    renderMembers(); renderOverview();
+  }catch(error){ toast(error.message || 'Unable to approve membership.'); }
+}
+async function declineMember(id){
+  try{
+    await apiRequest(`/admin/chamber-members/${id}/status`, { method:'PATCH', body:JSON.stringify({ status:'rejected' }) });
+    toast('Membership application rejected.');
+    renderMembers(); renderOverview();
+  }catch(error){ toast(error.message || 'Unable to reject membership.'); }
+}
+async function setMemberStatus(id, status){
+  try{
+    await apiRequest(`/admin/chamber-members/${id}/status`, { method:'PATCH', body:JSON.stringify({ status }) });
+    toast('Membership status updated.');
+    renderMembers(); renderOverview();
+  }catch(error){ toast(error.message || 'Unable to update membership.'); }
+}
+async function viewMember(id){
+  try{
+    const result = await apiRequest(`/admin/chamber-members/${id}`);
+    const member = result.membership;
+    alert(`Business: ${member.businessName}\nOwner: ${member.ownerName}\nMembership No.: ${member.membershipNumber || 'Pending'}\nStatus: ${member.status}\nPhone: ${member.phone || 'Not provided'}\nEmail: ${member.email || 'Not provided'}`);
+  }catch(error){ toast(error.message || 'Unable to load membership details.'); }
+}
+function openMemberQr(code){
+  const publicUrl = new URL(`member-profile.html?code=${encodeURIComponent(code)}`, window.location.href).href;
+  window.open(publicUrl, '_blank', 'noopener');
+}
+
+/* ---------- Directory ---------- */
+async function renderDirectory(){
+  try{
+    const response = await apiRequest('/admin/businesses?page=1&limit=100');
+    const businesses = response.data || [];
+    if(!businesses.length){
+      document.getElementById('directoryTable').innerHTML = `<tr><td colspan="5" class="text-soft">No businesses found.</td></tr>`;
+      return;
+    }
+    document.getElementById('directoryTable').innerHTML = businesses.map(b=>`
+    <tr>
+      <td><b>${b.name}</b><br><span class="text-soft">${b.ownerName || 'Owner not provided'}</span></td>
+      <td>${catLabel(b.category)}</td>
+      <td>${b.hours || 'Not specified'}</td>
+      <td><span class="status ${b.status === 'approved' ? 'active' : (b.status === 'rejected' ? 'declined' : 'pending')} ">${b.status.toUpperCase()}</span></td>
+      <td><div class="row-actions">
+        <button class="btn btn-outline btn-sm" onclick="toggleBiz('${b._id}','${b.status}')">${b.status === 'approved' ? 'Suspend' : 'Approve'}</button>
+        <button class="btn btn-danger btn-sm" onclick="removeBiz('${b._id}')">Remove</button>
+      </div></td>
+    </tr>
+    `).join('');
+  }catch(error){
+    document.getElementById('directoryTable').innerHTML = `<tr><td colspan="5" class="text-soft">Unable to load businesses.</td></tr>`;
+  }
+}
+async function toggleBiz(id, status){
+  const nextStatus = status === 'approved' ? 'suspended' : 'approved';
+  try{ await apiRequest(`/admin/businesses/${id}/status`, { method:'PATCH', body:JSON.stringify({ status: nextStatus }) }); renderDirectory(); renderOverview(); toast("Business status updated."); }
+  catch(error){ toast('Unable to update business status.'); }
+}
+async function removeBiz(id){
+  try{ await apiRequest(`/admin/businesses/${id}`, { method:'DELETE' }); renderDirectory(); renderOverview(); toast("Business removed."); }
+  catch(error){ toast('Unable to remove business.'); }
+}
+
+/* ---------- Jobs ---------- */
+async function renderJobs(){
+  try {
+    const result = await apiRequest('/admin/jobs?limit=100');
+    const jobs = result.data || [];
+    document.getElementById('jobsTable').innerHTML = jobs.length ? jobs.map(j=>`
+    <tr>
+      <td><b>${j.title}</b></td>
+      <td>${j.business?.name || j.company || '—'}</td>
+      <td>${j.employmentType || '—'}</td>
+      <td>${j.applicationCount || '—'}</td>
+      <td><span class="status ${j.status === 'published' ? 'active' : (j.status === 'rejected' ? 'declined' : 'pending')}">${j.status.toUpperCase()}</span></td>
+      <td><div class="row-actions">
+        ${j.status==='pending' ? `<button class="btn btn-primary btn-sm" onclick="updateJobStatus('${j._id}','published')">Approve</button><button class="btn btn-danger btn-sm" onclick="updateJobStatus('${j._id}','rejected')">Reject</button>` : ''}
+        ${j.status==='published' ? `<button class="btn btn-outline btn-sm" onclick="updateJobStatus('${j._id}','closed')">Close</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="removeJob('${j._id}')">Delete</button>
+      </div></td>
+    </tr>
+    `).join('') : '<tr><td colspan="6" class="text-soft">No jobs found.</td></tr>';
+  } catch (error) {
+    document.getElementById('jobsTable').innerHTML = '<tr><td colspan="6" class="text-soft">Unable to load jobs.</td></tr>';
+  }
+}
+async function updateJobStatus(id, status){ try { await apiRequest(`/admin/jobs/${id}/status`, { method:'PATCH', body:JSON.stringify({ status }) }); toast(`Job ${status}.`); renderJobs(); renderOverview(); } catch (error) { toast(error.message || 'Unable to update job.'); } }
+async function removeJob(id){ try { await apiRequest(`/admin/jobs/${id}`, { method:'DELETE' }); renderJobs(); renderOverview(); toast('Job deleted.'); } catch (error) { toast(error.message || 'Unable to delete job.'); } }
+
+async function renderApplications(){
+  try {
+    const result = await apiRequest('/admin/applications?limit=100');
+    const applications = result.data || [];
+    document.getElementById('applicationsTable').innerHTML = applications.length ? applications.map((application) => `
+      <tr>
+        <td><b>${application.jobSeeker?.name || 'Candidate'}</b><br><span class="text-soft">${application.jobSeeker?.email || ''}</span></td>
+        <td>${application.job?.title || '—'}</td>
+        <td>${application.job?.company || '—'}</td>
+        <td>${application.education || '—'}</td>
+        <td>${application.experience || '—'}</td>
+        <td>${application.createdAt ? new Date(application.createdAt).toLocaleDateString() : '—'}</td>
+        <td><span class="status ${application.status === 'rejected' || application.status === 'not_eligible' ? 'declined' : 'active'}">${application.status}</span></td>
+        <td><div class="row-actions">
+          <button class="btn btn-outline btn-sm" onclick="viewAdminApplication('${application._id}')">View</button>
+            ${application.jobSeeker?.cv?.fileName ? `<button class="btn btn-outline btn-sm" onclick="viewAdminCv('${application._id}')">View CV</button>` : ''}
+          <button class="btn btn-primary btn-sm" onclick="updateAdminApplication('${application._id}','eligible')">Eligible</button>
+          <button class="btn btn-primary btn-sm" onclick="updateAdminApplication('${application._id}','shortlisted')">Shortlist</button>
+          <button class="btn btn-danger btn-sm" onclick="updateAdminApplication('${application._id}','rejected')">Reject</button>
+        </div></td>
+      </tr>
+    `).join('') : '<tr><td colspan="8" class="text-soft">No applications found.</td></tr>';
+  } catch (error) {
+    document.getElementById('applicationsTable').innerHTML = '<tr><td colspan="8" class="text-soft">Unable to load applications.</td></tr>';
+  }
+}
+async function viewAdminCv(id){
+  const preview = window.open('', '_blank');
+  if(!preview){ toast('Please allow pop-ups to view the CV.'); return; }
+  preview.document.write('<p style="font-family:Arial,sans-serif;padding:24px;">Loading CV...</p>');
+  try{
+    const result = await apiRequest(`/admin/applications/${id}/cv`);
+    const cv = result.cv;
+    const binary = atob(String(cv.file || '').replace(/^data:[^,]+,/, ''));
+    const bytes = new Uint8Array(binary.length);
+    for(let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+    const url = URL.createObjectURL(new Blob([bytes], { type: cv.fileType || 'application/octet-stream' }));
+    preview.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }catch(error){ preview.close(); toast(error.message || 'Unable to load CV.'); }
+}
+async function updateAdminApplication(id, status){ try { await apiRequest(`/admin/applications/${id}/status`, { method:'PATCH', body:JSON.stringify({ status }) }); toast('Application status updated.'); renderApplications(); } catch (error) { toast(error.message || 'Unable to update application.'); } }
+async function viewAdminApplication(id){ try { const result = await apiRequest(`/admin/applications/${id}/candidate`); const candidate = result.candidate || {}; toast(`${candidate.name || 'Candidate'} · ${candidate.email || ''} · ${candidate.phone || ''}`); } catch (error) { toast(error.message || 'Unable to load candidate.'); } }
+
+async function renderNews(){
+  try {
+    const result = await apiRequest('/admin/news?limit=100');
+    document.getElementById('newsTable').innerHTML = (result.data || []).map((item) => `<tr><td><b>${item.title}</b></td><td>${item.category || '—'}</td><td>${item.status}</td><td>${item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : '—'}</td><td><button class="btn btn-outline btn-sm" onclick="editNews('${item._id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteNews('${item._id}')">Delete</button><button class="btn btn-primary btn-sm" onclick="setNewsStatus('${item._id}','${item.status === 'published' ? 'draft' : 'published'}')">${item.status === 'published' ? 'Draft' : 'Publish'}</button></td></tr>`).join('') || '<tr><td colspan="5" class="text-soft">No news available.</td></tr>';
+  } catch (error) { document.getElementById('newsTable').innerHTML = '<tr><td colspan="5" class="text-soft">Unable to load news.</td></tr>'; }
+}
+async function saveNews(publish = false){
+  const id = document.getElementById('news_id').value;
+  const title = document.getElementById('news_title').value.trim();
+  const content = document.getElementById('news_content').value.trim();
+  if(!title || !content){ toast('Please fill Title and Content before saving news.'); return; }
+  const body = { title, description: document.getElementById('news_description').value.trim(), content, image: document.getElementById('news_image').value.trim(), category: document.getElementById('news_category').value.trim(), status: publish ? 'published' : document.getElementById('news_status').value };
+  try { await apiRequest(id ? `/admin/news/${id}` : '/admin/news', { method: id ? 'PATCH' : 'POST', body: JSON.stringify(body) }); toast('News saved.'); document.getElementById('news_id').value = ''; renderNews(); } catch (error) { toast(error.message || 'Unable to save news.'); }
+}
+async function editNews(id){ const result = await apiRequest(`/admin/news/${id}`); const item = result.news; document.getElementById('news_id').value = item._id; document.getElementById('news_title').value = item.title || ''; document.getElementById('news_description').value = item.description || item.summary || ''; document.getElementById('news_content').value = item.content || ''; document.getElementById('news_image').value = item.image || ''; document.getElementById('news_category').value = item.category || ''; document.getElementById('news_status').value = item.status || 'draft'; switchPanel('news'); }
+async function setNewsStatus(id, status){ try { await apiRequest(`/admin/news/${id}/status`, { method:'PATCH', body:JSON.stringify({ status }) }); renderNews(); toast('News status updated.'); } catch (error) { toast(error.message || 'Unable to update news.'); } }
+async function deleteNews(id){ if (!confirm('Delete this news item?')) return; try { await apiRequest(`/admin/news/${id}`, { method:'DELETE' }); renderNews(); toast('News deleted.'); } catch (error) { toast(error.message || 'Unable to delete news.'); } }
+
+async function renderOffers(){
+  try {
+    const result = await apiRequest('/admin/offers?limit=100');
+    document.getElementById('offersTable').innerHTML = (result.data || []).map((item) => `<tr><td><b>${item.title}</b></td><td>${item.category || '—'}</td><td>${item.status}</td><td>${item.startDate ? new Date(item.startDate).toLocaleDateString() : '—'} – ${item.endDate ? new Date(item.endDate).toLocaleDateString() : '—'}</td><td><button class="btn btn-outline btn-sm" onclick="editOffer('${item._id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteOffer('${item._id}')">Delete</button><button class="btn btn-primary btn-sm" onclick="setOfferStatus('${item._id}','${item.status === 'published' ? 'draft' : 'published'}')">${item.status === 'published' ? 'Draft' : 'Publish'}</button></td></tr>`).join('') || '<tr><td colspan="5" class="text-soft">No offers available.</td></tr>';
+  } catch (error) { document.getElementById('offersTable').innerHTML = '<tr><td colspan="5" class="text-soft">Unable to load offers.</td></tr>'; }
+}
+async function saveOffer(publish = false){
+  const id = document.getElementById('offer_id').value;
+  const title = document.getElementById('offer_title').value.trim();
+  const startDate = document.getElementById('offer_start').value;
+  const endDate = document.getElementById('offer_end').value;
+  if(!title || !startDate || !endDate){ toast('Please fill Title, Start Date, and End Date before saving the offer.'); return; }
+  if(new Date(endDate) < new Date(startDate)){ toast('End Date must be on or after Start Date.'); return; }
+  const body = { title, description: document.getElementById('offer_description').value.trim(), image: document.getElementById('offer_image').value.trim(), category: document.getElementById('offer_category').value, link: document.getElementById('offer_link').value.trim(), startDate, endDate, status: publish ? 'published' : document.getElementById('offer_status').value };
+  try { await apiRequest(id ? `/admin/offers/${id}` : '/admin/offers', { method: id ? 'PATCH' : 'POST', body: JSON.stringify(body) }); toast('Offer saved.'); document.getElementById('offer_id').value = ''; renderOffers(); } catch (error) { toast(error.message || 'Unable to save offer.'); }
+}
+async function editOffer(id){ const result = await apiRequest(`/admin/offers/${id}`); const item = result.offer; document.getElementById('offer_id').value = item._id; document.getElementById('offer_title').value = item.title || ''; document.getElementById('offer_description').value = item.description || ''; document.getElementById('offer_image').value = item.image || ''; document.getElementById('offer_category').value = item.category || 'offers'; document.getElementById('offer_link').value = item.link || ''; document.getElementById('offer_start').value = item.startDate ? item.startDate.slice(0,10) : ''; document.getElementById('offer_end').value = item.endDate ? item.endDate.slice(0,10) : ''; document.getElementById('offer_status').value = item.status || 'draft'; switchPanel('offers'); }
+async function setOfferStatus(id, status){ try { await apiRequest(`/admin/offers/${id}/status`, { method:'PATCH', body:JSON.stringify({ status }) }); renderOffers(); toast('Offer status updated.'); } catch (error) { toast(error.message || 'Unable to update offer.'); } }
+async function deleteOffer(id){ if (!confirm('Delete this offer?')) return; try { await apiRequest(`/admin/offers/${id}`, { method:'DELETE' }); renderOffers(); toast('Offer deleted.'); } catch (error) { toast(error.message || 'Unable to delete offer.'); } }
+
+/* ---------- Ads ---------- */
+function escapeAdHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+function populateAdOptions(){
+  document.getElementById('ad_category').innerHTML = AD_CATEGORIES.map(category=>`<option value="${escapeAdHtml(category)}">${escapeAdHtml(category)}</option>`).join('');
+  document.getElementById('ad_badge').innerHTML = AD_BADGES.map(badge=>`<option value="${badge}">${badge}</option>`).join('');
+}
+function formatAdDate(value){ return value ? String(value).replace('T',' ').slice(0,16) : '—'; }
+function adDateTimeLocal(value){ if(!value) return ''; const date = new Date(value); return Number.isNaN(date.valueOf()) ? String(value).slice(0,16) : new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0,16); }
+function adPlacementLabel(placement){ return ({homepage:'Homepage Banner','sidebar-left':'Left Sidebar','sidebar-right':'Right Sidebar',directory:'Directory Page'})[placement] || placement; }
+function adIsLive(ad){ return isAdLive(ad); }
+async function renderAds(){
+  try {
+    const result = await apiRequest('/admin/ads?limit=100');
+    const rows = result.data || [];
+    window.adminAds = rows;
+    if(!rows.length && getDB().ads.length){
+      for(const localAd of getDB().ads){
+        const { id, start, end, image, slot, ...ad } = localAd;
+        await apiRequest('/admin/ads', { method:'POST', body:JSON.stringify({ ...ad, placement: localAd.placement || slot || 'homepage', startAt: localAd.startAt || `${start}T00:00`, endAt: localAd.endAt || `${end}T23:59:59` }) });
+      }
+      const migrated = await apiRequest('/admin/ads?limit=100');
+      window.adminAds = migrated.data || [];
+    }
+    document.getElementById('adsTable').innerHTML = rows.length ? rows.map(ad=>`
+      <tr><td>${ad.imageUrl ? `<img src="${escapeAdHtml(ad.imageUrl)}" alt="" style="width:48px;height:36px;object-fit:cover;border-radius:6px;">` : '<span class="text-soft">—</span>'}</td><td style="white-space:normal;min-width:180px;"><b>${escapeAdHtml(ad.title)}</b><br><span class="text-soft">${escapeAdHtml(ad.badge || 'AD')} · ${ad.enabled === false ? 'Disabled' : 'Enabled'}</span></td><td>${escapeAdHtml(ad.category || '—')}</td><td>${escapeAdHtml(adPlacementLabel(ad.placement))}</td><td><span class="status ${ad.status==='published'?'active':(ad.status==='draft'?'pending':'expired')}">${escapeAdHtml(ad.status.toUpperCase())}${isAdLive(ad) ? ' · LIVE' : ''}</span></td><td>${formatAdDate(ad.startAt || '')}</td><td>${formatAdDate(ad.endAt || '')}</td><td>${ad.order || 0}</td><td><div class="row-actions"><button class="btn btn-outline btn-sm" onclick="editAd('${ad._id}')">Edit</button><button class="btn btn-outline btn-sm" onclick="previewAd('${ad._id}')">Preview</button><button class="btn btn-danger btn-sm" onclick="deleteAd('${ad._id}')">Delete</button>${ad.status === 'published' ? `<button class="btn btn-sm" onclick="setAdStatus('${ad._id}','unpublished')">Unpublish</button>` : `<button class="btn btn-primary btn-sm" onclick="setAdStatus('${ad._id}','published')">Publish</button>`}<button class="btn btn-sm" onclick="toggleAdEnabled('${ad._id}',${ad.enabled !== false})">${ad.enabled === false ? 'Enable' : 'Disable'}</button></div></td></tr>
+    `).join('') : `<tr><td colspan="9" class="text-soft">No advertisements created.</td></tr>`;
+    return;
+  } catch (error) {
+    document.getElementById('adsTable').innerHTML = `<tr><td colspan="9" class="text-soft">Unable to load advertisements.</td></tr>`;
+  }
+  /* Keep the local data fallback for existing offline demo records. */
+  const db = refreshAdStatuses();
+  const rows = db.ads.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  document.getElementById('adsTable').innerHTML = rows.length ? rows.map(ad=>`
+    <tr>
+      <td>${ad.imageUrl ? `<img src="${escapeAdHtml(ad.imageUrl)}" alt="" style="width:48px;height:36px;object-fit:cover;border-radius:6px;">` : '<span class="text-soft">—</span>'}</td>
+      <td style="white-space:normal;min-width:180px;"><b>${escapeAdHtml(ad.title)}</b><br><span class="text-soft">${escapeAdHtml(ad.badge)} · ${ad.enabled === false ? 'Disabled' : 'Enabled'}</span></td>
+      <td>${escapeAdHtml(ad.category)}</td>
+      <td>${escapeAdHtml(adPlacementLabel(ad.placement))}</td>
+      <td><span class="status ${ad.status==='published'?'active':(ad.status==='draft'?'pending':'expired')}">${escapeAdHtml(ad.status.toUpperCase())}${adIsLive(ad) ? ' · LIVE' : ''}</span></td>
+      <td>${formatAdDate(escapeAdHtml(ad.startAt))}</td>
+      <td>${formatAdDate(escapeAdHtml(ad.endAt))}</td>
+      <td>${ad.order || 0}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-outline btn-sm" onclick="editAd('${ad.id}')">Edit</button>
+        <button class="btn btn-outline btn-sm" onclick="previewAd('${ad.id}')">Preview</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAd('${ad.id}')">Delete</button>
+        ${ad.status === 'published' ? `<button class="btn btn-sm" onclick="setAdStatus('${ad.id}','unpublished')">Unpublish</button>` : `<button class="btn btn-primary btn-sm" onclick="setAdStatus('${ad.id}','published')">Publish</button>`}
+        <button class="btn btn-sm" onclick="toggleAdEnabled('${ad.id}')">${ad.enabled === false ? 'Enable' : 'Disable'}</button>
+      </div></td>
+    </tr>
+  `).join('') : `<tr><td colspan="9" class="text-soft">No advertisements created.</td></tr>`;
+}
+function resetAdForm(){
+  ['ad_id','ad_title','ad_subtitle','ad_description','ad_content','ad_image','ad_link'].forEach(id=>document.getElementById(id).value='');
+  const start = new Date();
+  start.setSeconds(0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 30);
+  const toDateTimeLocal = value => { const offset = value.getTimezoneOffset(); return new Date(value.getTime() - offset * 60000).toISOString().slice(0, 16); };
+  document.getElementById('ad_start').value = toDateTimeLocal(start);
+  document.getElementById('ad_end').value = toDateTimeLocal(end);
+  document.getElementById('ad_category').value = 'Other';
+  document.getElementById('ad_badge').value = 'LIVE';
+  document.getElementById('ad_slot').value = 'homepage';
+  document.getElementById('ad_order').value = 0;
+  document.getElementById('ad_status').value = 'draft';
+  document.getElementById('ad_enabled').checked = true;
+  document.getElementById('ad_upload').value = '';
+  document.getElementById('adEditorTitle').textContent = '➕ Create New Ad';
+}
+function editAd(id){
+  const ad = (window.adminAds || []).find(item=>item._id===id || item.id===id); if(!ad) return;
+  document.getElementById('ad_id').value = ad._id || ad.id;
+  document.getElementById('ad_title').value = ad.title || '';
+  document.getElementById('ad_subtitle').value = ad.subtitle || '';
+  document.getElementById('ad_description').value = ad.description || '';
+  document.getElementById('ad_content').value = ad.content || '';
+  document.getElementById('ad_category').value = ad.category || 'Other';
+  document.getElementById('ad_badge').value = ad.badge || 'LIVE';
+  document.getElementById('ad_slot').value = ad.placement || 'homepage';
+  document.getElementById('ad_order').value = ad.order || 0;
+  document.getElementById('ad_start').value = adDateTimeLocal(ad.startAt);
+  document.getElementById('ad_end').value = adDateTimeLocal(ad.endAt);
+  document.getElementById('ad_image').value = ad.imageUrl || '';
+  document.getElementById('ad_link').value = ad.link || '';
+  document.getElementById('ad_status').value = ad.status || 'draft';
+  document.getElementById('ad_enabled').checked = ad.enabled !== false;
+  document.getElementById('adEditorTitle').textContent = '✏️ Edit Advertisement';
+  document.getElementById('adEditor').scrollIntoView({behavior:'smooth', block:'start'});
+}
+async function saveAdFromForm(publish = false){
+  const title = document.getElementById('ad_title').value.trim();
+  const startAt = document.getElementById('ad_start').value;
+  const endAt = document.getElementById('ad_end').value;
+  if(!title || !startAt || !endAt){ toast('Please fill title, start and end date/time.'); return; }
+  if(new Date(endAt) <= new Date(startAt)){ toast('End time must be after start time.'); return; }
+  const upload = document.getElementById('ad_upload').files[0];
+  let imageUrl = document.getElementById('ad_image').value.trim();
+  if(upload) imageUrl = await new Promise((resolve,reject)=>{ const reader = new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=reject; reader.readAsDataURL(upload); });
+  const id = document.getElementById('ad_id').value;
+  const existing = (window.adminAds || []).find(ad=>ad._id===id);
+  const record = { id, title, subtitle:document.getElementById('ad_subtitle').value.trim(), description:document.getElementById('ad_description').value.trim(), content:document.getElementById('ad_content').value.trim(), image:existing?.image || 'linear-gradient(135deg,#0f6e51,#0a4f3a)', imageUrl, placement:document.getElementById('ad_slot').value, slot:document.getElementById('ad_slot').value, status:publish ? 'published' : document.getElementById('ad_status').value, enabled:document.getElementById('ad_enabled').checked, startAt, endAt, start:startAt.slice(0,10), end:endAt.slice(0,10), category:document.getElementById('ad_category').value, badge:document.getElementById('ad_badge').value, link:document.getElementById('ad_link').value.trim() || 'directory.html', order:Number(document.getElementById('ad_order').value) || 0, impressions:existing?.impressions || 0 };
+  delete record.id;
+  await apiRequest(id ? `/admin/ads/${id}` : '/admin/ads', { method: id ? 'PATCH' : 'POST', body: JSON.stringify(record) });
+  await renderAds(); renderOverview(); resetAdForm(); toast(existing ? 'Advertisement updated.' : 'Advertisement saved.');
+}
+async function setAdStatus(id, status){ try { await apiRequest(`/admin/ads/${id}/status`, { method:'PATCH', body:JSON.stringify({ status }) }); await renderAds(); renderOverview(); toast(`Advertisement ${status}.`); } catch(error){ toast(error.message || 'Unable to update advertisement.'); } }
+async function toggleAdEnabled(id, enabled){ try { await apiRequest(`/admin/ads/${id}`, { method:'PATCH', body:JSON.stringify({ enabled: !enabled }) }); await renderAds(); renderOverview(); toast(!enabled ? 'Advertisement enabled.' : 'Advertisement disabled.'); } catch(error){ toast(error.message || 'Unable to update advertisement.'); } }
+async function deleteAd(id){ if(!confirm('Delete this advertisement?')) return; try { await apiRequest(`/admin/ads/${id}`, { method:'DELETE' }); await renderAds(); renderOverview(); toast('Advertisement deleted.'); } catch(error){ toast(error.message || 'Unable to delete advertisement.'); } }
+function previewAd(id){
+  const ad=(window.adminAds || []).find(item=>item._id===id || item.id===id); if(!ad) return;
+  const preview=window.open('', '_blank', 'width=480,height=520');
+  if(!preview) return;
+  preview.document.write(`<title>${escapeAdHtml(ad.title)}</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#1a2420}img{max-width:100%;height:220px;object-fit:cover;border-radius:10px}h1{font-size:22px}p{color:#5b6b64}</style>${ad.imageUrl?`<img src="${escapeAdHtml(ad.imageUrl)}" alt="">`:''}<h1>${escapeAdHtml(ad.title)}</h1><p>${escapeAdHtml(ad.subtitle)}</p><p>${escapeAdHtml(ad.description)}</p><div>${escapeAdHtml(ad.content)}</div><br><b>${escapeAdHtml(ad.category)} · ${escapeAdHtml(ad.badge)}</b>`);
+}
+</script>
+</body>
+</html>

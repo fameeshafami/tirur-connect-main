@@ -1,0 +1,872 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Seeker Dashboard — Tirur Connect</title>
+<link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<div id="guardScreen" style="display:none;">
+  <div class="container" style="max-width:420px; padding-top:60px; text-align:center;">
+    <div style="font-size:40px;">💼</div>
+    <h2>Job Seeker Access</h2>
+    <p class="text-soft">Please sign in with a valid Job Seeker account.</p>
+    <a href="login.html" class="btn btn-primary mt-12">Go to Login</a>
+  </div>
+</div>
+
+<div id="dashboardScreen" style="display:none;">
+  <div class="container" style="padding-top:16px;">
+    <h1 style="font-size:19px;">Job Seeker Dashboard</h1>
+    <p class="text-soft">Manage your profile, CV, saved jobs, and applications.</p>
+  </div>
+
+  <div class="admin-shell container">
+    <aside class="admin-sidebar">
+      <a data-panel="overview" class="active">📊 Overview</a>
+      <a data-panel="profile">👤 Profile</a>
+      <a data-panel="cv">📄 My CV</a>
+      <a data-panel="jobs">🔎 Find Jobs</a>
+      <a data-panel="saved">💾 Saved Jobs</a>
+      <a data-panel="applications">📝 My Applications</a>
+      <a data-panel="notifications">🔔 Notifications</a>
+      <a data-panel="settings">⚙️ Settings</a>
+    </aside>
+
+    <div class="admin-main">
+      <div class="admin-tabs">
+        <button data-panel="overview" class="active">Overview</button>
+        <button data-panel="profile">Profile</button>
+        <button data-panel="cv">CV</button>
+        <button data-panel="jobs">Find Jobs</button>
+        <button data-panel="saved">Saved</button>
+        <button data-panel="applications">Applications</button>
+        <button data-panel="notifications">Alerts</button>
+        <button data-panel="settings">Settings</button>
+      </div>
+
+      <div class="admin-panel active" id="panel-overview">
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="card mt-16">
+          <h3 style="font-size:14.5px;">Profile completion</h3>
+          <div id="profileCompletion"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-profile">
+        <div class="form-card">
+          <h3 style="font-size:14.5px;">My Profile</h3>
+          <div id="profileForm"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-cv">
+        <div class="form-card">
+          <h3 style="font-size:14.5px;">My CV</h3>
+          <div id="cvForm"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-jobs">
+        <div class="card">
+          <h3 style="font-size:14.5px;">Find Jobs</h3>
+          <div class="filter-bar mt-12">
+            <input id="jobSearch" placeholder="Search job title or company…">
+            <select id="jobLocationFilter"><option value="">All Locations</option></select>
+            <select id="jobTypeFilter"><option value="">All Types</option><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option></select>
+          </div>
+          <div id="jobsList" class="mt-12"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-saved">
+        <div class="card">
+          <h3 style="font-size:14.5px;">Saved Jobs</h3>
+          <div id="savedJobsList"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-applications">
+        <div class="card">
+          <h3 style="font-size:14.5px;">My Applications</h3>
+          <div id="applicationsList"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-notifications">
+        <div class="card">
+          <h3 style="font-size:14.5px;">Notifications</h3>
+          <div id="notificationsList"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-settings">
+        <div class="form-card">
+          <h3 style="font-size:14.5px;">Settings</h3>
+          <div id="settingsPanel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="applicationModal" class="modal-bg" role="dialog" aria-modal="true" aria-labelledby="applicationModalTitle">
+  <div class="modal-box">
+    <div class="modal-close"><button class="btn btn-outline btn-sm" type="button" onclick="closeApplicationModal()">Close</button></div>
+    <h2 id="applicationModalTitle" style="font-size:18px;">Application Details</h2>
+    <div id="applicationDetails" class="mt-12"></div>
+  </div>
+</div>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+renderChrome('job-seeker');
+const apiBase = 'http://localhost:5001/api/job-seeker';
+const publicApiBase = 'http://localhost:5001/api';
+const state = { user: null, dashboard: null, cv: null, jobs: [], savedJobs: [], applications: [], notifications: [] };
+
+async function apiCall(path, options = {}) {
+  const token = getAuthToken();
+  const headers = { ...(options.headers || {}) };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+  const response = await fetch(`${apiBase}${path}`, { ...options, headers });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Request failed.');
+  return data;
+}
+
+function switchPanel(name) {
+  document.querySelectorAll('.admin-panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + name));
+  document.querySelectorAll('.admin-sidebar a, .admin-tabs button').forEach((el) => el.classList.toggle('active', el.dataset.panel === name));
+}
+document.querySelectorAll('.admin-sidebar a, .admin-tabs button').forEach((el) => {
+  el.addEventListener('click', () => switchPanel(el.dataset.panel));
+});
+
+async function verifyJobSeekerAccess() {
+  const token = getAuthToken();
+  if (!token) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  try {
+    const me = await fetch('http://localhost:5001/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await me.json().catch(() => ({}));
+
+    if (!me.ok || !data.user || data.user.role !== 'job_seeker' || data.user.status === 'suspended' || data.user.status === 'rejected') {
+      clearAuthSession();
+      window.location.href = 'login.html';
+      return;
+    }
+
+    state.user = data.user;
+    saveAuthSession(token, data.user);
+    document.getElementById('dashboardScreen').style.display = 'block';
+    await loadJobSeekerData();
+  } catch (error) {
+    clearAuthSession();
+    window.location.href = 'login.html';
+  }
+}
+
+function renderProfileForm() {
+  const user = state.user || {};
+  document.getElementById('profileForm').innerHTML = `
+    <div class="grid cols-2">
+      <div class="form-group"><label>Name</label><input id="profileName" value="${user.name || ''}"></div>
+      <div class="form-group"><label>Email</label><input id="profileEmail" type="email" value="${user.email || ''}"></div>
+      <div class="form-group"><label>Phone</label><input id="profilePhone" value="${user.phone || ''}"></div>
+      <div class="form-group"><label>Location</label><input id="profileLocation" value="${user.location || ''}"></div>
+      <div class="form-group" style="grid-column:1 / -1;"><label>Bio</label><textarea id="profileBio">${user.bio || ''}</textarea></div>
+      <div class="form-group"><label>Education</label><input id="profileEducation" value="${user.education || ''}"></div>
+      <div class="form-group"><label>Experience</label><input id="profileExperience" value="${user.experience || ''}"></div>
+      <div class="form-group" style="grid-column:1 / -1;"><label>Skills</label><input id="profileSkills" value="${Array.isArray(user.skills) ? user.skills.join(', ') : (user.skills || '')}"></div>
+    </div>
+    <button class="btn btn-primary mt-12" onclick="saveProfile()">Save Profile</button>
+    <div class="mt-16">
+      <h4>Change Password</h4>
+      <div class="grid cols-2">
+        <div class="form-group"><label>Current Password</label><input id="currentPassword" type="password" autocomplete="current-password"></div>
+        <div class="form-group"><label>New Password</label><input id="newPassword" type="password" minlength="8" autocomplete="new-password"></div>
+      </div>
+      <button class="btn btn-outline mt-12" onclick="changePassword()">Update Password</button>
+    </div>
+  `;
+}
+
+async function changePassword(){
+  const currentPassword = document.getElementById('currentPassword').value;
+  const newPassword = document.getElementById('newPassword').value;
+  if(!currentPassword || !newPassword) return toast('Enter your current and new password.');
+  if(newPassword.length < 8) return toast('New password must be at least 8 characters long.');
+  try{ const response = await fetch('http://localhost:5001/api/auth/password', { method:'PATCH', headers:{'Content-Type':'application/json', Authorization:`Bearer ${getAuthToken()}`}, body:JSON.stringify({ currentPassword, newPassword }) }); const data = await response.json().catch(()=>({})); if(!response.ok) throw new Error(data.message || 'Unable to update password.'); document.getElementById('currentPassword').value=''; document.getElementById('newPassword').value=''; toast(data.message || 'Password updated.'); }
+  catch(error){ toast(error.message || 'Unable to update password.'); }
+}
+
+async function saveProfile() {
+  const payload = {
+    name: document.getElementById('profileName').value.trim(),
+    email: document.getElementById('profileEmail').value.trim(),
+    phone: document.getElementById('profilePhone').value.trim(),
+    location: document.getElementById('profileLocation').value.trim(),
+    bio: document.getElementById('profileBio').value.trim(),
+    education: document.getElementById('profileEducation').value.trim(),
+    experience: document.getElementById('profileExperience').value.trim(),
+    skills: document.getElementById('profileSkills').value.split(',').map((s) => s.trim()).filter(Boolean),
+  };
+
+  const result = await apiCall('/profile', { method: 'PATCH', body: JSON.stringify(payload) });
+  state.user = result.user;
+  saveAuthSession(getAuthToken(), result.user);
+  toast('Profile updated');
+  await loadJobSeekerData();
+}
+
+function renderCvForm() {
+  const cv = state.cv || {};
+  document.getElementById('cvForm').innerHTML = `
+    <div style="border-radius:16px;overflow:hidden;border:1px solid #c8ead9;box-shadow:0 4px 20px rgba(10,79,58,.1);">
+
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#062e22 0%,#0a4f3a 55%,#0f6e51 100%);padding:20px 22px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.06);border-radius:50%;pointer-events:none;"></div>
+        <div style="position:relative;z-index:1;">
+          <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;margin-bottom:10px;">
+            <span style="font-size:12px;">📄</span>
+            <span style="color:rgba(255,255,255,.9);font-size:10px;font-weight:800;letter-spacing:.07em;">MY CV</span>
+          </div>
+          <h3 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;">Your Career Document</h3>
+          <p style="font-size:12.5px;color:rgba(255,255,255,.7);margin:0;">Upload your CV so employers and Chamber members can find you.</p>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div style="background:#fff;padding:20px 22px;">
+
+        ${cv && cv.fileName ? `
+        <div style="display:flex;align-items:center;gap:12px;background:#f0faf5;border:1.5px solid #c8ead9;border-radius:12px;padding:13px 16px;margin-bottom:16px;">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,#0a4f3a,#0f6e51);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📄</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13.5px;font-weight:800;color:#0a4f3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cv.fileName}</div>
+            <div style="font-size:11.5px;color:#5b6b64;margin-top:2px;">${cv.fileType || ''} · Uploaded ${cv.uploadedAt ? new Date(cv.uploadedAt).toLocaleDateString('en-IN') : ''}</div>
+          </div>
+          <span style="background:#e4f7e9;color:#137a3f;font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;">✓ VISIBLE</span>
+        </div>` : `
+        <div style="background:#f8fcfa;border:1.5px dashed #c8ead9;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px;">
+          <div style="font-size:36px;margin-bottom:8px;">📄</div>
+          <div style="font-size:13px;font-weight:700;color:#0a4f3a;margin-bottom:3px;">No CV uploaded yet</div>
+          <div style="font-size:12px;color:#5b6b64;">PDF, DOC, or DOCX · Max 5MB</div>
+        </div>`}
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+          <label style="flex:1;display:flex;align-items:center;gap:10px;background:#f5f9f7;border:1.5px solid #c8ead9;border-radius:10px;padding:10px 14px;cursor:pointer;min-width:160px;">
+            <span style="font-size:16px;">📎</span>
+            <span id="cvFileName" style="font-size:12.5px;color:#5b6b64;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Choose file…</span>
+            <input id="cvFileInput" type="file" accept=".pdf,.doc,.docx" style="display:none;" onchange="document.getElementById('cvFileName').textContent=this.files[0]?.name||'Choose file…'">
+          </label>
+          <button onclick="uploadCv()" style="background:#0f6e51;color:#fff;border:none;cursor:pointer;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:800;white-space:nowrap;box-shadow:0 3px 12px rgba(15,110,81,.25);">
+            ${cv && cv.fileName ? '↑ Replace CV' : '↑ Upload CV'}
+          </button>
+          ${cv && cv.fileName ? `<button onclick="deleteCv()" style="background:#fdeaea;color:#b91c1c;border:none;cursor:pointer;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:700;">🗑 Delete</button>` : ''}
+        </div>
+
+        <p style="font-size:11px;color:#8fa89e;margin:0;">🔒 Your CV is visible only to active Admins, Shop Owners, and Chamber Members.</p>
+      </div>
+    </div>
+  `;
+}
+
+async function uploadCv() {
+  const input = document.getElementById('cvFileInput');
+  const file = input.files && input.files[0];
+  if (!file) {
+    toast('Please select a PDF, DOC, or DOCX file.');
+    return;
+  }
+
+  const allowed = ['pdf', 'doc', 'docx'];
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (!allowed.includes(ext)) {
+    toast('Only PDF, DOC, and DOCX files are allowed.');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast('CV file must be smaller than 5MB.');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1] || reader.result;
+    try {
+      await apiCall('/cv', { method: 'POST', body: JSON.stringify({
+        file: base64,
+        fileName: file.name,
+        fileType: file.type || 'application/octet-stream',
+        fileSize: file.size,
+      }) });
+      toast('CV uploaded');
+      await loadJobSeekerData();
+    } catch (error) {
+      toast(error.message || 'Unable to upload CV.');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function deleteCv() {
+  await apiCall('/cv', { method: 'DELETE' });
+  toast('CV deleted');
+  await loadJobSeekerData();
+}
+
+function renderJobsList() {
+  const jobs = state.jobs || [];
+  if (!jobs.length) {
+    document.getElementById('jobsList').innerHTML = '<p class="text-soft">No published jobs found.</p>';
+    return;
+  }
+
+  document.getElementById('jobsList').innerHTML = jobs.map((job) => `
+    <div class="card mt-12" style="border-left:3px solid var(--brand);">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;">
+        <div>
+          <span style="display:inline-block;background:var(--brand-light);color:var(--brand-dark);font-size:10px;font-weight:800;padding:2px 9px;border-radius:20px;margin-bottom:5px;">${job.employmentType||'Full Time'}</span>
+          <strong style="display:block;font-size:14px;color:#0a4f3a;">${job.title}</strong>
+          <p class="text-soft" style="margin:3px 0 0;font-size:12px;">${job.business?.name||job.company||'Business'} &middot; ${job.location||''}</p>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:var(--brand-dark);white-space:nowrap;">${job.salary||''}</span>
+      </div>
+      <p style="font-size:12.5px;color:#5b6b64;margin:4px 0 10px;">${(job.description||'').slice(0,120)}${(job.description||'').length>120?'...':''}</p>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="openApplyModal('${job._id}')">Apply Now</button>
+        <button class="btn btn-outline btn-sm" onclick="saveThisJob('${job._id}')">Save</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function filterJobs() {
+  const search = document.getElementById('jobSearch').value.trim();
+  const location = document.getElementById('jobLocationFilter').value;
+  const type = document.getElementById('jobTypeFilter').value;
+
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (location) params.set('location', location);
+  if (type) params.set('employmentType', type);
+
+  const result = await fetch(`${publicApiBase}/jobs${params.toString() ? `?${params.toString()}` : ''}`);
+  const data = await result.json().catch(() => ({}));
+  state.jobs = (data.data || []).filter((job) => job && job.status === 'published');
+  renderJobsList();
+  populateLocationFilter();
+}
+
+function populateLocationFilter() {
+  const locations = [...new Set((state.jobs || []).map((item) => item.location).filter(Boolean))];
+  const select = document.getElementById('jobLocationFilter');
+  const current = select.value;
+  select.innerHTML = '<option value="">All Locations</option>' + locations.map((loc) => `<option value="${loc}">${loc}</option>`).join('');
+  if (locations.includes(current)) select.value = current;
+}
+
+async function saveThisJob(jobId) {
+  try {
+    await apiCall(`/saved-jobs/${jobId}`, { method: 'POST' });
+    toast('Job saved');
+    await loadJobSeekerData();
+  } catch (err) {
+    toast(err.message || 'Unable to save job.');
+  }
+}
+
+function openApplyModal(jobId) {
+  const job = (state.jobs || []).find(j => j._id === jobId) || {};
+  const jobTitle = job.title || 'Job Application';
+  // Create or reuse apply modal
+  let modal = document.getElementById('jsApplyModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'jsApplyModal';
+    modal.className = 'modal-bg';
+    modal.innerHTML = '<div class="modal-box" id="jsApplyBox"></div>';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('open'); };
+    document.body.appendChild(modal);
+  }
+  const user = state.user || {};
+  document.getElementById('jsApplyBox').innerHTML = `
+    <div class="modal-close"><button class="btn btn-outline btn-sm" onclick="document.getElementById('jsApplyModal').classList.remove('open')">Close</button></div>
+    <h3 style="font-size:16px;margin-bottom:4px;">Apply: ${jobTitle}</h3>
+    <p class="text-soft" style="font-size:12.5px;margin-bottom:14px;">Fill in your details and submit your application.</p>
+    <div class="form-group">
+      <label>Cover Letter *</label>
+      <textarea id="jsCover" rows="4" placeholder="Why are you a great fit for this role? What experience do you bring?">${user.bio||''}</textarea>
+    </div>
+    <div class="grid cols-2">
+      <div class="form-group">
+        <label>Education</label>
+        <input id="jsEdu" placeholder="e.g. B.Com, 12th Pass" value="${user.education||''}">
+      </div>
+      <div class="form-group">
+        <label>Experience</label>
+        <input id="jsExp" placeholder="e.g. 2 years sales" value="${user.experience||''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Skills <span style="font-weight:400;color:#8fa89e;">(comma separated)</span></label>
+      <input id="jsSkills" placeholder="e.g. Communication, MS Excel, Malayalam" value="${Array.isArray(user.skills)?user.skills.join(', '):(user.skills||'')}">
+    </div>
+    <button class="btn btn-primary btn-block mt-8" id="jsSubmitBtn" onclick="submitJsApplication('${jobId}')">Submit Application →</button>`;
+  modal.classList.add('open');
+}
+
+async function submitJsApplication(jobId) {
+  const btn = document.getElementById('jsSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+  const cover  = (document.getElementById('jsCover')?.value  || '').trim();
+  const edu    = (document.getElementById('jsEdu')?.value    || '').trim();
+  const exp    = (document.getElementById('jsExp')?.value    || '').trim();
+  const skills = (document.getElementById('jsSkills')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+  if (!cover) {
+    toast('Please write a cover letter before submitting.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Application →'; }
+    return;
+  }
+  try {
+    await apiCall('/applications', {
+      method: 'POST',
+      body: JSON.stringify({ jobId, coverLetter: cover, education: edu, experience: exp, skills }),
+    });
+    document.getElementById('jsApplyModal')?.classList.remove('open');
+    toast('Application submitted successfully!');
+    await loadJobSeekerData();
+  } catch (error) {
+    toast(error.message || 'Unable to submit application.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Application →'; }
+  }
+}
+
+
+function renderSavedJobsList() {
+  if (!state.savedJobs.length) {
+    document.getElementById('savedJobsList').innerHTML = '<p class="text-soft">No saved jobs.</p>';
+    return;
+  }
+
+  document.getElementById('savedJobsList').innerHTML = state.savedJobs.map((item) => `
+    <div class="card mt-12">
+      <strong>${item.job?.title || 'Job'}</strong>
+      <p class="text-soft">${item.job?.business?.name || item.job?.company || ''} � ${item.job?.location || ''}</p>
+      <button class="btn btn-outline btn-sm" onclick="removeSavedJob('${item.job?._id || item.job}')">Remove</button>
+    </div>
+  `).join('');
+}
+
+async function removeSavedJob(jobId) {
+  try {
+    await apiCall(`/saved-jobs/${jobId}`, { method: 'DELETE' });
+    toast('Saved job removed');
+    await loadJobSeekerData();
+  } catch (err) {
+    toast(err.message || 'Unable to remove saved job.');
+  }
+}
+
+function renderApplicationsList() {
+  if (!state.applications.length) {
+    document.getElementById('applicationsList').innerHTML = '<p class="text-soft">No applications found.</p>';
+    return;
+  }
+
+  document.getElementById('applicationsList').innerHTML = state.applications.map((application) => `
+    <div class="card mt-12">
+      <strong>${application.job?.title || 'Application'}</strong>
+      <p class="text-soft">${application.job?.company || application.business || 'Business'} � ${new Date(application.createdAt).toLocaleDateString()}</p>
+      <p>Status: ${application.status}</p>
+      <button class="btn btn-outline btn-sm" onclick="viewApplication('${application._id}')">View Application</button>
+    </div>
+  `).join('');
+}
+
+async function viewApplication(id) {
+  try {
+    const result = await apiCall(`/applications/${id}`);
+    const application = result.application;
+    const job = application.job || {};
+    const cvAction = application.cv
+      ? `<button class="btn btn-primary btn-sm" onclick="downloadApplicationCv('${application._id}')">View / Download CV</button>`
+      : '<span class="text-soft">No CV attached.</span>';
+    document.getElementById('applicationDetails').innerHTML = `
+      <div class="card">
+        <h3 style="font-size:15px;">${escapeHtml(job.title || 'Application')}</h3>
+        <p class="text-soft">${escapeHtml(job.company || 'Business')} · ${escapeHtml(job.location || 'Location')}</p>
+        <p><strong>Status:</strong> ${escapeHtml(application.status || 'submitted')}</p>
+        <p><strong>Submitted:</strong> ${application.createdAt ? new Date(application.createdAt).toLocaleDateString() : '—'}</p>
+        <p><strong>Employment:</strong> ${escapeHtml(job.employmentType || '—')}</p>
+        <p><strong>Salary:</strong> ${escapeHtml(job.salary || '—')}</p>
+        <p><strong>Education:</strong> ${escapeHtml(application.education || '—')}</p>
+        <p><strong>Experience:</strong> ${escapeHtml(application.experience || '—')}</p>
+        <p><strong>Skills:</strong> ${escapeHtml((application.skills || []).join(', ') || '—')}</p>
+        <p><strong>Cover Letter:</strong> ${escapeHtml(application.coverLetter || '—')}</p>
+        <div class="mt-12">${cvAction}</div>
+      </div>`;
+    document.getElementById('applicationModal').classList.add('open');
+  } catch (error) {
+    toast(error.message || 'Unable to load application.');
+  }
+}
+
+function escapeHtml(value) { return String(value || '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
+function closeApplicationModal() { document.getElementById('applicationModal').classList.remove('open'); }
+async function downloadApplicationCv(id) {
+  try {
+    const result = await apiCall(`/applications/${id}/cv`);
+    const cv = result.cv;
+    const binary = atob(cv.file);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+    const url = URL.createObjectURL(new Blob([bytes], { type: cv.fileType || 'application/octet-stream' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = cv.fileName || 'my-cv';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) {
+    toast(error.message || 'Unable to load CV.');
+  }
+}
+
+function renderNotificationsList() {
+  if (!state.notifications.length) {
+    document.getElementById('notificationsList').innerHTML = '<div class="empty-state"><div class="ic">🔔</div><p>No notifications yet.</p></div>';
+    return;
+  }
+  
+  const notes = state.notifications;
+  const unread = notes.filter(n => !n.readAt);
+  const showOnlyUnread = unread.length > 0; // Show only unread if there are unread notifications
+  const displayNotes = showOnlyUnread ? unread : notes;
+
+  function jsNotifLink(n) {
+    const type = n.type || '';
+    if (type.includes('application') || type.includes('shortlisted') || type.includes('eligible') || type.includes('rejected') || type.includes('not_eligible')) return 'applications';
+    if (type.includes('job')) return 'jobs';
+    return null;
+  }
+
+  document.getElementById('notificationsList').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <span style="font-size:13.5px;font-weight:800;color:#1a2420;">
+          ${showOnlyUnread ? `${unread.length} New Notification${unread.length===1?'':'s'}` : `${notes.length} Notification${notes.length===1?'':'s'}`}
+        </span>
+        ${!showOnlyUnread && unread.length ? `<span style="margin-left:8px;background:#fdeaea;color:#b91c1c;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;">${unread.length} unread</span>` : ''}
+      </div>
+      ${notes.length > unread.length ? `<button onclick="toggleShowAllNotifications()" style="background:var(--brand-light);border:1px solid var(--brand);color:var(--brand);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:600;cursor:pointer;">${showOnlyUnread ? 'Show All' : 'Show New Only'}</button>` : ''}
+    </div>
+    ${displayNotes.length === 0 ? '<p style="color:var(--ink-soft);font-size:13px;text-align:center;padding:20px;">All caught up! 🎉</p>' : displayNotes.map(n => {
+      const link = jsNotifLink(n);
+      const icon = n.readAt ? '📭' : (
+        (n.type||'').includes('shortlisted') ? '⭐' :
+        (n.type||'').includes('eligible') ? '✅' :
+        (n.type||'').includes('rejected') ? '❌' :
+        (n.type||'').includes('not_eligible') ? '⚠️' :
+        (n.type||'').includes('application_submitted') ? '📤' :
+        (n.type||'').includes('application') ? '📝' :
+        (n.type||'').includes('job') ? '💼' : '🔔'
+      );
+      return `
+      <div onclick="${link ? `handleNotificationClick('${n._id}', '${link}')` : ''}"
+        style="display:flex;gap:12px;align-items:flex-start;padding:13px 14px;border-radius:12px;margin-bottom:8px;background:${n.readAt?'#fafafa':'#fff'};border:1.5px solid ${n.readAt?'#f0f0f0':'#c8ead9'};${n.readAt?'opacity:.7;':''}${link?'cursor:pointer;':''}transition:.15s ease;"
+        ${link ? `onmouseover="this.style.borderColor='#0f6e51';this.style.background='#f0faf5';" onmouseout="this.style.borderColor='${n.readAt?'#f0f0f0':'#c8ead9'}';this.style.background='${n.readAt?'#fafafa':'#fff'}';"` : ''}
+      >
+        <div style="width:38px;height:38px;border-radius:10px;flex-shrink:0;background:${n.readAt?'#f5f5f5':'linear-gradient(135deg,#e6f4ef,#c8ead9)'};display:flex;align-items:center;justify-content:center;font-size:18px;">${icon}</div>
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:13px;margin:0 0 4px;line-height:1.4;${!n.readAt?'font-weight:700;color:#1a2420;':'color:#5b6b64;'}">${escapeHtml(n.message || n.type)}</p>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:#8fa89e;">${n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-IN',{year:'numeric',month:'short',day:'numeric'}) : ''}</span>
+            ${link ? `<span style="font-size:10.5px;color:#0f6e51;font-weight:700;">Tap to read & view →</span>` : ''}
+          </div>
+        </div>
+        <div style="flex-shrink:0;">
+          ${!n.readAt ? `<span style="background:#fff3de;color:#8a5a00;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;">NEW</span>` : `<span style="font-size:10px;color:#8fa89e;">✓ Read</span>`}
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+// Toggle between showing all notifications and only unread
+let showAllNotifications = false;
+function toggleShowAllNotifications() {
+  showAllNotifications = !showAllNotifications;
+  renderNotificationsList();
+}
+
+// Auto-read and navigate notification handler
+async function handleNotificationClick(notificationId, panel) {
+  if (!notificationId || !panel) return;
+  
+  try {
+    // Mark notification as read and remove it
+    await apiCall(`/notifications/${notificationId}/read`, { method: 'PATCH' });
+    
+    // Remove notification from state immediately for instant UI feedback
+    state.notifications = state.notifications.filter(n => n._id !== notificationId);
+    
+    // Update UI to reflect removal
+    renderNotificationsList();
+    renderOverview(); // Update unread count
+    
+    // Navigate to relevant panel
+    switchPanel(panel);
+    
+    // Show success feedback
+    showNotificationDismissed();
+    
+  } catch (error) {
+    console.error('Failed to mark notification as read:', error);
+    // Still navigate even if API call fails
+    switchPanel(panel);
+  }
+}
+
+// Show notification dismissed feedback
+function showNotificationDismissed() {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--brand);
+    color: white;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 10000;
+    animation: slideInOut 2s ease forwards;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--shadow);
+  `;
+  
+  notification.innerHTML = `✅ Notification read`;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => notification.remove(), 2000);
+}
+
+// Add CSS animation for notification feedback
+const notificationStyle = document.createElement('style');
+notificationStyle.textContent = `
+  @keyframes slideInOut {
+    0% { transform: translateX(100%); opacity: 0; }
+    15% { transform: translateX(0); opacity: 1; }
+    85% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(notificationStyle);
+
+function renderOverview() {
+  const user = state.user || {};
+  const dash = state.dashboard || {};
+  const unread = (state.notifications || []).filter((n) => !n.readAt).length;
+
+  // Stat cards — clickable, navigate to the relevant panel
+  const stats = [
+    { label: 'Applications', value: dash.applications?.total ?? (state.applications || []).length, icon: '📝', panel: 'applications' },
+    { label: 'Saved Jobs', value: dash.savedJobs ?? (state.savedJobs || []).length, icon: '💾', panel: 'saved' },
+    { label: 'Shortlisted', value: dash.applications?.shortlisted ?? (state.applications || []).filter((a) => a.status === 'shortlisted').length, icon: '⭐', panel: 'applications' },
+    { label: 'Unread Alerts', value: dash.notifications ?? unread, icon: '🔔', panel: 'notifications' },
+  ];
+  document.getElementById('statGrid').innerHTML = stats.map((s) => `
+    <button class="stat-card" type="button" onclick="switchPanel('${s.panel}')" title="Go to ${s.label}" style="cursor:pointer; text-align:left; width:100%; border:none;">
+      <div style="font-size:22px; margin-bottom:4px;">${s.icon}</div>
+      <div class="num">${s.value}</div>
+      <div class="lbl">${s.label}</div>
+    </button>`).join('');
+
+  const fields = [
+    { label: 'Name', done: !!user.name, panel: 'profile' },
+    { label: 'Email', done: !!user.email, panel: 'profile' },
+    { label: 'Phone', done: !!user.phone, panel: 'profile' },
+    { label: 'Location', done: !!user.location, panel: 'profile' },
+    { label: 'Bio', done: !!user.bio, panel: 'profile' },
+    { label: 'Education', done: !!user.education, panel: 'profile' },
+    { label: 'Experience', done: !!user.experience, panel: 'profile' },
+    { label: 'Skills', done: !!(Array.isArray(user.skills) ? user.skills.length : user.skills), panel: 'profile' },
+    { label: 'CV uploaded', done: !!state.cv, panel: 'cv' },
+  ];
+  const done = fields.filter((f) => f.done).length;
+  const pct = Math.round((done / fields.length) * 100);
+  const barColor = pct < 40 ? 'var(--danger)' : pct < 75 ? 'var(--accent)' : 'var(--brand)';
+
+  document.getElementById('profileCompletion').innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+      <span class="text-soft" style="font-size:13px;">${done} of ${fields.length} fields complete</span>
+      <span style="font-weight:800; color:${barColor}; font-size:15px;">${pct}%</span>
+    </div>
+    <div style="background:var(--border); border-radius:20px; height:8px; overflow:hidden;">
+      <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:20px; transition:.4s ease;"></div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:14px;">
+      ${fields.map((f) => `
+        <button type="button" onclick="switchPanel('${f.panel}')" style="display:flex; align-items:center; gap:7px; font-size:12.5px; padding:6px 8px; border-radius:8px; background:${f.done ? '#f0faf4' : '#fafafa'}; border:1px solid ${f.done ? '#cfe6dc' : 'var(--border)'}; cursor:pointer; text-align:left; width:100%;">
+          <span style="font-size:14px;">${f.done ? '✅' : '⬜'}</span>
+          <span style="${f.done ? 'color:var(--brand-dark); font-weight:600;' : 'color:var(--ink-soft);'}">${f.label}</span>
+        </button>`).join('')}
+    </div>
+    ${pct < 100 ? `<a href="#" onclick="switchPanel('profile'); return false;" class="btn btn-primary btn-sm mt-12">Complete your profile →</a>` : '<p class="text-soft mt-12" style="font-size:12px;">🎉 Profile is fully complete!</p>'}`;
+
+  // Recent applications summary
+  const recentApplications = (state.applications || []).slice(0, 3);
+  const recentSection = recentApplications.length ? `
+    <div class="card mt-16">
+      <h3 style="font-size:14.5px; margin-bottom:10px;">📝 Recent Applications</h3>
+      ${recentApplications.map((a) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border);">
+          <div>
+            <p style="font-size:13px; font-weight:700; margin:0;">${escapeHtml(a.job?.title || 'Application')}</p>
+            <p class="text-soft" style="font-size:11.5px; margin:2px 0 0;">${escapeHtml(a.job?.company || '')} · ${a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN') : ''}</p>
+          </div>
+          <span class="status ${a.status === 'shortlisted' || a.status === 'eligible' ? 'active' : a.status === 'rejected' || a.status === 'not_eligible' ? 'declined' : 'pending'}" style="white-space:nowrap;">${escapeHtml(a.status || 'submitted').toUpperCase()}</span>
+        </div>`).join('')}
+      <a href="#" onclick="switchPanel('applications'); return false;" class="btn btn-outline btn-sm mt-12">View all applications →</a>
+    </div>` : '';
+
+  // Append recent apps after the overview panel (avoid re-rendering statGrid area)
+  const existingRecent = document.getElementById('recentAppsSection');
+  if (existingRecent) existingRecent.remove();
+  if (recentSection) {
+    const div = document.createElement('div');
+    div.id = 'recentAppsSection';
+    div.innerHTML = recentSection;
+    document.getElementById('panel-overview').appendChild(div);
+  }
+}
+
+function renderSettingsPanel() {
+  const user = state.user || {};
+  document.getElementById('settingsPanel').innerHTML = `
+    <div class="grid cols-2">
+      <div class="form-group"><label>Name</label><input id="settingName" value="${escapeHtml(user.name || '')}"></div>
+      <div class="form-group"><label>Phone</label><input id="settingPhone" value="${escapeHtml(user.phone || '')}"></div>
+      <div class="form-group" style="grid-column:1 / -1;"><label>Email</label><input id="settingEmail" type="email" value="${escapeHtml(user.email || '')}"></div>
+    </div>
+    <button class="btn btn-primary mt-12" onclick="saveSettings()">Save Settings</button>
+    <div class="mt-16" style="padding-top:14px; border-top:1px solid var(--border);">
+      <h4 style="font-size:13.5px; margin-bottom:10px;">Change Password</h4>
+      <div class="grid cols-2">
+        <div class="form-group"><label>Current Password</label><input id="settingCurrentPwd" type="password" autocomplete="current-password"></div>
+        <div class="form-group"><label>New Password</label><input id="settingNewPwd" type="password" minlength="8" autocomplete="new-password"></div>
+      </div>
+      <button class="btn btn-outline mt-8" onclick="changePasswordFromSettings()">Update Password</button>
+    </div>`;
+}
+
+async function saveSettings() {
+  const payload = {
+    name: document.getElementById('settingName').value.trim(),
+    phone: document.getElementById('settingPhone').value.trim(),
+    email: document.getElementById('settingEmail').value.trim(),
+  };
+  try {
+    const result = await apiCall('/profile', { method: 'PATCH', body: JSON.stringify(payload) });
+    state.user = result.user;
+    saveAuthSession(getAuthToken(), result.user);
+    toast('Settings saved.');
+    renderOverview();
+    renderSettingsPanel();
+  } catch (error) {
+    toast(error.message || 'Unable to save settings.');
+  }
+}
+
+async function changePasswordFromSettings() {
+  const currentPassword = document.getElementById('settingCurrentPwd').value;
+  const newPassword = document.getElementById('settingNewPwd').value;
+  if (!currentPassword || !newPassword) return toast('Enter your current and new password.');
+  if (newPassword.length < 8) return toast('New password must be at least 8 characters.');
+  try {
+    const response = await fetch('http://localhost:5001/api/auth/password', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || 'Unable to update password.');
+    document.getElementById('settingCurrentPwd').value = '';
+    document.getElementById('settingNewPwd').value = '';
+    toast(data.message || 'Password updated.');
+  } catch (error) {
+    toast(error.message || 'Unable to update password.');
+  }
+}
+
+async function loadJobSeekerData() {
+  try {
+    const [dashboard, cv, jobs, savedJobs, applications, notifications] = await Promise.all([
+      apiCall('/dashboard'),
+      apiCall('/cv'),
+      fetch(`${publicApiBase}/jobs?status=published`).then((res) => res.json().catch(() => ({}))),
+      apiCall('/saved-jobs'),
+      apiCall('/applications'),
+      apiCall('/notifications'),
+    ]);
+
+    state.dashboard = dashboard;
+    state.cv = cv.cv || null;
+    state.jobs = (jobs.data || []).filter((job) => job && job.status === 'published');
+    state.savedJobs = savedJobs.data || [];
+    state.applications = applications.data || [];
+    state.notifications = notifications.data || [];
+
+    renderProfileForm();
+    renderCvForm();
+    renderJobsList();
+    renderSavedJobsList();
+    renderApplicationsList();
+    renderNotificationsList();
+    renderOverview();
+    renderSettingsPanel();
+    populateLocationFilter();
+    document.getElementById('jobSearch').oninput = async (e) => {
+      const search = e.target.value.trim();
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      const result = await fetch(`${publicApiBase}/jobs${params.toString() ? `?${params.toString()}` : ''}`);
+      const data = await result.json().catch(() => ({}));
+      state.jobs = (data.data || []).filter((job) => job && job.status === 'published');
+      renderJobsList();
+      populateLocationFilter();
+    };
+    document.getElementById('jobLocationFilter').onchange = filterJobs;
+    document.getElementById('jobTypeFilter').onchange = filterJobs;
+  } catch (error) {
+    toast(error.message || 'Unable to load dashboard data.');
+  }
+}
+
+verifyJobSeekerAccess();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,20 @@
+const express = require('express');
+const { verifyToken } = require('../middleware/auth');
+const { requireChamberMember } = require('../middleware/chamberMember');
+const controller = require('../controllers/chamberMemberController');
+
+const router = express.Router();
+const asyncHandler = (handler) => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
+router.use(verifyToken, requireChamberMember);
+router.get('/profile', asyncHandler(controller.getProfile));
+router.patch('/profile', asyncHandler(controller.updateProfile));
+router.get('/membership', asyncHandler(controller.getMembership));
+router.post('/membership', asyncHandler(controller.createMembership));
+router.patch('/membership', asyncHandler(controller.updateMembership));
+router.get('/qr', asyncHandler(controller.getQr));
+router.post('/qr', asyncHandler(controller.createQr));
+router.get('/all-active-members', asyncHandler(controller.getAllActiveMembers));
+router.get('/notifications', asyncHandler(controller.getNotifications));
+router.patch('/notifications/:id/read', asyncHandler(controller.markNotificationRead));
+router.patch('/notifications/read-all', asyncHandler(controller.markAllNotificationsRead));
+module.exports = router;

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Directory — Tirur Connect</title>
+<link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<main>
+  <section class="section" style="padding-bottom:0;">
+    <div class="container">
+      <div class="flex-between" style="align-items:flex-start; gap:10px;">
+        <div>
+          <h1 style="font-size:19px;">Local Business Directory</h1>
+          <p class="text-soft">Browse verified local businesses in Tirur</p>
+        </div>
+        <a href="list-business.html" class="btn btn-primary btn-sm" style="flex-shrink:0;">➕ List Free</a>
+      </div>
+      <div class="filter-bar mt-12">
+        <input type="text" id="searchInput" placeholder="Search by name or service…">
+        <select id="statusFilter">
+          <option value="">All Status</option>
+          <option value="open">Open Now</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="chip-row" id="catChips"></div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="grid" id="bizGrid"></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-bg" id="bizModalBg">
+  <div class="modal-box" id="bizModalBox"></div>
+</div>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+renderChrome('directory');
+const params = new URLSearchParams(location.search);
+let activeCat = params.get('cat') || "";
+let activeStatus = "";
+let query = params.get('q') || "";
+let businesses = [];
+let gridRequest = 0;
+
+document.getElementById('searchInput').value = query;
+
+const chipRow = document.getElementById('catChips');
+function renderChips(){
+  const db = getDB();
+  const chips = [{id:"", label:"All"}, ...db.categories.map(c=>({id:c.id, label:c.icon+" "+c.label}))];
+  chipRow.innerHTML = chips.map(c=>`<div class="chip ${activeCat===c.id?'active':''}" data-cat="${c.id}">${c.label}</div>`).join('');
+  chipRow.querySelectorAll('.chip').forEach(el=>{
+    el.addEventListener('click', ()=>{ activeCat = el.dataset.cat; renderChips(); renderGrid(); });
+  });
+}
+
+document.getElementById('searchInput').addEventListener('input', e=>{ query = e.target.value; renderGrid(); });
+document.getElementById('statusFilter').addEventListener('change', e=>{ activeStatus = e.target.value; renderGrid(); });
+
+function catLabel(id){ const c = getDB().categories.find(x=>x.id===id); return c ? `${c.label}${c.sub ? ` (${c.sub})` : ''}` : id; }
+
+async function renderGrid(){
+  const grid = document.getElementById('bizGrid');
+  const requestId = ++gridRequest;
+  const requestParams = new URLSearchParams({ page:'1', limit:'100' });
+  if(query) requestParams.set('search', query);
+  if(activeCat) requestParams.set('category', activeCat);
+  if(activeStatus) requestParams.set('open', activeStatus === 'open' ? 'true' : 'false');
+  try{
+    const response = await apiRequest(`/businesses?${requestParams.toString()}`);
+    if(requestId !== gridRequest) return;
+    businesses = response.data || [];
+  }catch(error){
+    if(requestId !== gridRequest) return;
+    grid.innerHTML = `<div class="empty-state"><div class="ic">⚠️</div>Unable to load businesses.</div>`;
+    return;
+  }
+  const list = businesses;
+  if(list.length === 0){
+    grid.innerHTML = `<div class="empty-state"><div class="ic">🔍</div>No businesses match your search.</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(b=>`
+    <article class="card job-card job-card-rich" onclick="openBiz('${b._id}')">
+      <div class="job-card-top">
+        <div class="flex gap-8" style="align-items:flex-start;">
+          <div class="logo">${b.name.charAt(0)}</div>
+          <div>
+            <span class="badge">${catLabel(b.category)}</span>
+            <h3>${b.name}</h3>
+            <div class="company">${b.address || 'Tirur'} · 📍 ${b.location || 'Tirur'}</div>
+          </div>
+        </div>
+        <span class="tag ${b.open !== false?'open':'closed'}">${b.open !== false?'Open':'Closed'}</span>
+      </div>
+      <p class="text-soft">${b.description || 'Local business and services in Tirur.'}</p>
+      <div class="job-meta-chips">
+        <span>${b.hours || 'Hours not provided'}</span>
+        <span>${catLabel(b.category)}</span>
+      </div>
+      <div class="foot">
+        <b style="font-size:13.5px;color:var(--brand-dark)">${b.phone || 'Contact business'}</b>
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openBiz('${b._id}')">View Details</button>
+      </div>
+    </article>
+  `).join('');
+}
+
+function openBiz(id){
+  const b = businesses.find(x=>x._id===id);
+  if(!b) return;
+  document.getElementById('bizModalBox').innerHTML = `
+    <div class="modal-close" onclick="closeBizModal()">✕</div>
+    <div class="flex gap-8" style="align-items:center;">
+      <div class="logo" style="width:50px;height:50px;">${b.name.charAt(0)}</div>
+      <div><h3 style="margin-bottom:2px;">${b.name}</h3><span class="tag">${catLabel(b.category)}</span> <span class="tag ${b.open !== false?'open':'closed'}">${b.open !== false?'Open Now':'Closed'}</span></div>
+    </div>
+    <p class="mt-12">${b.description || ''}</p>
+    <div class="meta-row mt-8"><span>🕒 ${b.hours || 'Hours not provided'}</span><span>📍 ${b.address || 'Tirur'}</span></div>
+    <div class="flex gap-8 mt-16">
+      <a href="tel:${(b.phone || '').replace(/\s/g,'')}" class="btn btn-primary btn-block">📞 Call ${b.phone || 'Business'}</a>
+    </div>
+  `;
+  document.getElementById('bizModalBg').classList.add('open');
+}
+function closeBizModal(){ document.getElementById('bizModalBg').classList.remove('open'); }
+document.getElementById('bizModalBg').addEventListener('click', e=>{ if(e.target.id==='bizModalBg') closeBizModal(); });
+
+renderChips();
+renderGrid();
+</script>
+</body>
+</html>

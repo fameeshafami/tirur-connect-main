@@ -1,0 +1,645 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Career Portal — Tirur Connect</title><link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg"><link rel="stylesheet" href="css/style.css">
+<style>
+/* Tirur Connect-themed save job button */
+.save-job-btn {
+  background: transparent;
+  border: 1px solid var(--ink-soft);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--ink-soft);
+  padding: 0;
+}
+
+.save-job-btn:hover {
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.save-job-btn.saved {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: white;
+}
+
+.save-job-btn.saved svg {
+  fill: currentColor;
+}
+
+.save-job-btn svg {
+  transition: fill 0.2s ease;
+}
+
+/* Tirur Connect-themed tooltip */
+.save-job-btn[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+  margin-bottom: 5px;
+  z-index: 1000;
+}
+</style></head><body>
+<div data-chrome="topbar" class="topbar"></div><header data-chrome="header" class="site-header"></header><div data-chrome="mobilemenu" class="mobile-menu"></div>
+<main><section class="section" style="padding-bottom:0"><div class="container"><h1 style="font-size:19px">Career Panel</h1><p class="text-soft">Local job openings from Chamber member businesses</p><div id="careerActions" class="career-actions mt-12"></div><div class="filter-bar mt-12"><input id="jobSearch" placeholder="Search job title or company…"><select id="typeFilter"><option value="">All Types</option><option>Full-time</option><option>Part-time</option></select></div></div></section><section class="section" style="padding-top:0"><div class="container two-col"><div class="grid" id="jobGrid"></div><aside class="hide-mobile"><div class="card"><h3 style="font-size:14.5px">🔒 Candidate Resumes</h3><p class="text-soft">Candidate contact details and resumes are available to businesses with an <b>active, paid Chamber Membership</b>.</p><a href="membership.html" class="btn btn-accent btn-block mt-8">Become a Chamber Member</a></div></aside></div></section></main>
+<div class="modal-bg" id="jobModalBg"><div class="modal-box" id="jobModalBox"></div></div><div class="modal-bg" id="careerModalBg"><div class="modal-box" id="careerModalBox"></div></div><footer data-chrome="footer" class="site-footer"></footer><nav data-chrome="tabbar" class="tabbar"></nav><script src="js/app.js"></script><script>
+renderChrome('jobs');
+const publicApiBase = 'http://localhost:5001/api';
+let query = '';
+let typeFilter = '';
+const $ = (id) => document.getElementById(id);
+const escapeCareerHtml = (value) => String(value || '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+
+$('jobSearch').oninput = (e) => {
+  query = e.target.value.trim();
+  renderJobs();
+};
+$('typeFilter').onchange = (e) => {
+  typeFilter = e.target.value;
+  renderJobs();
+};
+
+function formatRelativeTime(dateValue) {
+  if (!dateValue) return 'Recently';
+  const diffMs = Date.now() - new Date(dateValue).getTime();
+  const minutes = Math.max(1, Math.round(diffMs / 60000));
+  if (minutes < 60) return `Posted ${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `Posted ${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.round(hours / 24);
+  return `Posted ${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+async function renderCareerActions() {
+  const user = getSession();
+  if (!user) return;
+
+  const canViewResumes = ['admin', 'shop_owner', 'chamber_member'].includes(user.role) && user.status === 'active';
+  const canPostJobs = ['shop_owner', 'chamber_member'].includes(user.role) && user.status === 'active';
+  if (canViewResumes) {
+    const jobVacancySection = canPostJobs ? `
+      <div class="career-callout mt-12">
+        <div>
+          <b>📋 Post a Job Vacancy</b>
+          <span>List an opening from your business — visible to local job seekers after admin approval.</span>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="openJobVacancyModal()">Upload Job Vacancy</button>
+      </div>
+    ` : '';
+
+    $('careerActions').innerHTML = `
+      <div class="card" style="border-left:4px solid var(--brand);">
+        <div class="flex-between" style="gap:12px;align-items:flex-start;">
+          <div>
+            <h3 style="font-size:15px;margin-bottom:4px;">📄 Uploaded Candidate CVs</h3>
+            <p class="text-soft" style="margin:0;">Discover active Job Seekers who have shared their CV.</p>
+          </div>
+          <span class="tag" style="white-space:nowrap;">MEMBERS ONLY</span>
+        </div>
+        <div id="careerResumes" class="mt-8"><p class="text-soft">Loading candidate profiles...</p></div>
+      </div>
+      ${jobVacancySection}
+    `;
+    renderResumeDirectory('careerResumes');
+    return;
+  }
+
+  if (user.role !== 'job_seeker') return;
+
+  let cv = null;
+  try {
+    const response = await apiRequest('/job-seeker/cv');
+    cv = response.cv;
+  } catch (error) {
+    $('careerActions').innerHTML = `<div class="card"><p class="text-soft">${error.message || 'Unable to load your CV.'}</p></div>`;
+    return;
+  }
+
+  $('careerActions').innerHTML = `
+    <div style="
+      border-radius:16px; overflow:hidden;
+      box-shadow:0 4px 20px rgba(10,79,58,.12);
+      border:1px solid #c8ead9;
+    ">
+      <!-- Header -->
+      <div style="
+        background:linear-gradient(135deg,#062e22 0%,#0a4f3a 55%,#0f6e51 100%);
+        padding:20px 22px; position:relative; overflow:hidden;
+      ">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.06);border-radius:50%;pointer-events:none;"></div>
+        <div style="position:absolute;bottom:-40px;left:-10px;width:100px;height:100px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none;"></div>
+        <div style="position:relative;z-index:1;">
+         
+          <h3 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 5px;line-height:1.2;">Make your profile discoverable</h3>
+          <p style="font-size:12.5px;color:rgba(255,255,255,.7);margin:0;">Upload your CV so verified businesses can find your skills.</p>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div style="background:#fff;padding:18px 22px;">
+
+        ${cv?.fileName ? `
+        <!-- Existing CV -->
+        <div style="display:flex;align-items:center;gap:12px;background:#f0faf5;border:1.5px solid #c8ead9;border-radius:12px;padding:13px 16px;margin-bottom:16px;">
+          <div style="width:42px;height:42px;background:linear-gradient(135deg,#0a4f3a,#0f6e51);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📄</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13.5px;font-weight:800;color:#0a4f3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeCareerHtml(cv.fileName)}</div>
+            <div style="font-size:11.5px;color:#5b6b64;margin-top:2px;">Uploaded CV · Visible to verified businesses</div>
+          </div>
+          <span style="background:#e4f7e9;color:#137a3f;font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;">✓ ACTIVE</span>
+        </div>` : `
+        <!-- No CV -->
+        <div style="background:#f8fcfa;border:1.5px dashed #c8ead9;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">
+          <div style="font-size:32px;margin-bottom:6px;">📄</div>
+          <div style="font-size:13px;font-weight:700;color:#0a4f3a;margin-bottom:3px;">No CV uploaded yet</div>
+          <div style="font-size:12px;color:#5b6b64;">PDF, DOC, or DOCX · Max 5MB</div>
+        </div>`}
+
+        <!-- Upload area -->
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <label style="
+            flex:1;display:flex;align-items:center;gap:10px;
+            background:#f5f9f7;border:1.5px solid #c8ead9;border-radius:10px;
+            padding:10px 14px;cursor:pointer;min-width:160px;
+          ">
+            <span style="font-size:16px;">📎</span>
+            <span id="cvFileLabel" style="font-size:12.5px;color:#5b6b64;font-weight:600;">Choose file…</span>
+            <input id="careerCvInput" type="file" accept=".pdf,.doc,.docx" style="display:none;" onchange="document.getElementById('cvFileLabel').textContent=this.files[0]?.name||'Choose file…'">
+          </label>
+          <button type="button" onclick="uploadCareerCv()" style="
+            background:#0f6e51;color:#fff;border:none;cursor:pointer;
+            border-radius:10px;padding:11px 20px;font-size:13px;font-weight:800;
+            white-space:nowrap;box-shadow:0 3px 12px rgba(15,110,81,.25);
+          ">${cv?.fileName ? '↑ Replace CV' : '↑ Upload CV'}</button>
+        </div>
+
+        <p style="font-size:11px;color:#8fa89e;margin:10px 0 0;">🔒 Your CV is visible only to active Admins, Shop Owners, and Chamber Members.</p>
+      </div>
+    </div>
+  `;
+}
+
+async function uploadCareerCv() {
+  const input = $('careerCvInput');
+  const file = input.files && input.files[0];
+  if (!file) {
+    toast('Please select a PDF, DOC, or DOCX file.');
+    return;
+  }
+
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  if (!['pdf', 'doc', 'docx'].includes(extension)) {
+    toast('Only PDF, DOC, and DOCX files are allowed.');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    toast('CV file must be smaller than 5MB.');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const result = String(reader.result || '');
+      await apiRequest('/job-seeker/cv', {
+        method: 'POST',
+        body: JSON.stringify({
+          file: result.split(',')[1] || result,
+          fileName: file.name,
+          fileType: file.type || 'application/octet-stream',
+          fileSize: file.size,
+        }),
+      });
+      toast('CV uploaded successfully.');
+      await renderCareerActions();
+    } catch (error) {
+      toast(error.message || 'Unable to upload CV.');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function renderJobs() {
+  try {
+    const params = new URLSearchParams();
+    if (query) params.set('search', query);
+    if (typeFilter) params.set('employmentType', typeFilter);
+    const response = await fetch(`${publicApiBase}/jobs${params.toString() ? `?${params.toString()}` : ''}`);
+    const result = await response.json().catch(() => ({}));
+    const jobs = (result.data || []).filter((job) => job && job.status === 'published');
+
+    $('jobGrid').innerHTML = jobs.length ? jobs.map((job) => `
+      <article class="card job-card job-card-rich">
+        <div class="job-card-top">
+          <div>
+            <span class="badge ${job.employmentType === 'Full Time' ? 'type-full' : 'type-part'}">${job.employmentType || 'Full Time'}</span>
+            <h3>${job.title}</h3>
+            <div class="company">${job.business?.name || job.company || 'Business'} · 📍 ${job.location || 'Location'}</div>
+          </div>
+          <span class="posted-time">${formatRelativeTime(job.createdAt)}</span>
+        </div>
+        <div class="job-meta-chips">
+          <span>${job.location || 'Location'}</span>
+          <span>${job.experience || 'Experience not specified'}</span>
+        </div>
+        <p class="text-soft">${job.description || ''}</p>
+        <div class="job-skills">${(job.skills || []).slice(0, 3).map((skill) => `<span>${skill}</span>`).join('')}</div>
+        <div class="foot">
+          <b style="font-size:13.5px;color:var(--brand-dark)">${job.salary || 'Salary negotiable'}</b>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="openJob('${job._id}')">View Details</button>
+            ${getSession() && getSession().role === 'job_seeker' ? `
+              <button class="save-job-btn" onclick="toggleSaveJob('${job._id}')" data-job-id="${job._id}" title="Save job">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </button>` : ''}
+          </div>
+        </div>
+      </article>
+    `).join('') : '<div class="empty-state"><div class="ic">??</div>No jobs found.</div>';
+  } catch (error) {
+    $('jobGrid').innerHTML = '<div class="empty-state"><div class="ic">??</div>No jobs found.</div>';
+  }
+}
+
+async function openJob(id) {
+  try {
+    const response = await fetch(`${publicApiBase}/jobs/${id}`);
+    const result = await response.json().catch(() => ({}));
+    const job = result.job;
+    if (!job) return;
+
+    const user = getSession();
+    const isJobSeeker = user && user.role === 'job_seeker' && user.status === 'active';
+    const isExternal  = job.applicationMethod === 'external';
+
+    let applySection = '';
+    if (isExternal) {
+      applySection = `<a class="btn btn-primary btn-block mt-12" href="${escapeCareerHtml(job.applicationLink || '#')}" target="_blank" rel="noopener">Apply on Company Website ↗</a>`;
+    } else if (!user) {
+      applySection = `<a class="btn btn-primary btn-block mt-12" href="login.html">Login to Apply</a>`;
+    } else if (!isJobSeeker) {
+      applySection = `<div style="background:#f5f9f7;border:1px solid #c8ead9;border-radius:10px;padding:12px 14px;margin-top:12px;font-size:13px;color:#5b6b64;">Only Job Seeker accounts can apply. <a href="login.html" style="color:#0f6e51;font-weight:700;">Switch account →</a></div>`;
+    } else {
+      applySection = `
+        <div style="margin-top:16px;background:#f8fcfa;border:1px solid #c8ead9;border-radius:14px;padding:16px;" id="applyFormBox">
+          <h4 style="font-size:14px;font-weight:800;color:#0a4f3a;margin:0 0 12px;">📝 Submit Your Application</h4>
+          <div style="margin-bottom:10px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#5b6b64;margin-bottom:4px;">Cover Letter</label>
+            <textarea id="applycover" rows="3" style="width:100%;border:1px solid #c8ead9;border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="Why are you a great fit for this role?"></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#5b6b64;margin-bottom:4px;">Education</label>
+              <input id="applyedu" style="width:100%;border:1px solid #c8ead9;border-radius:8px;padding:8px 10px;font-size:13px;" placeholder="e.g. B.Com, 12th Pass" value="${escapeCareerHtml(user.education || '')}">
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#5b6b64;margin-bottom:4px;">Experience</label>
+              <input id="applyexp" style="width:100%;border:1px solid #c8ead9;border-radius:8px;padding:8px 10px;font-size:13px;" placeholder="e.g. 2 years retail" value="${escapeCareerHtml(user.experience || '')}">
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#5b6b64;margin-bottom:4px;">Skills <span style="font-weight:400;">(comma separated)</span></label>
+            <input id="applyskills" style="width:100%;border:1px solid #c8ead9;border-radius:8px;padding:8px 10px;font-size:13px;" placeholder="e.g. Communication, MS Excel" value="${escapeCareerHtml(Array.isArray(user.skills) ? user.skills.join(', ') : (user.skills || ''))}">
+          </div>
+          <button class="btn btn-primary btn-block" id="applySubmitBtn" onclick="submitApplyForm('${job._id}')">Submit Application →</button>
+        </div>`;
+    }
+
+    $('jobModalBox').innerHTML = `
+      <div class="modal-close" onclick="closeJobModal()" style="cursor:pointer;font-size:22px;color:#5b6b64;text-align:right;margin-bottom:6px;">×</div>
+      <div class="job-detail-heading">
+        <span class="badge ${job.employmentType === 'Full-time' ? 'type-full' : 'type-part'}">${escapeCareerHtml(job.employmentType || 'Full Time')}</span>
+        <h2 style="margin:6px 0 4px;">${escapeCareerHtml(job.title)}</h2>
+        <p style="margin:0;color:#5b6b64;">${escapeCareerHtml(job.business?.name || job.company || 'Business')} · 📍 ${escapeCareerHtml(job.location || 'Location')}</p>
+        <span class="posted-time">${formatRelativeTime(job.createdAt)}</span>
+      </div>
+      <div class="job-detail-grid" style="margin-top:12px;">
+        <span>📍 ${escapeCareerHtml(job.location || 'Location')}</span>
+        <span>🎓 ${escapeCareerHtml(job.education || 'Any')}</span>
+        <span>💰 ${escapeCareerHtml(job.salary || 'Negotiable')}</span>
+        <span>👥 ${job.quantity || 1} vacancy</span>
+        <span>⏳ ${job.closingDate ? new Date(job.closingDate).toLocaleDateString('en-IN') : 'Open'}</span>
+        <span>💼 ${escapeCareerHtml(job.experience || 'Any')}</span>
+      </div>
+      <section class="job-detail-section"><h4>Description</h4><p>${escapeCareerHtml(job.description || '')}</p></section>
+      ${job.requirements ? `<section class="job-detail-section"><h4>Requirements</h4><p>${escapeCareerHtml(job.requirements)}</p></section>` : ''}
+      ${(job.skills||[]).length ? `<section class="job-detail-section"><h4>Skills</h4><div class="job-skills">${job.skills.map(s=>`<span>${escapeCareerHtml(s)}</span>`).join('')}</div></section>` : ''}
+      ${isJobSeeker ? `
+        <div style="display: flex; align-items: center; gap: 12px; margin: 16px 0;">
+          <button class="save-job-btn" onclick="toggleSaveJob('${job._id}')" data-job-id="${job._id}" title="Save job" style="width: 40px; height: 40px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+          <span style="font-size: 14px; color: #666;">Save this job for later</span>
+        </div>` : ''}
+      ${applySection}`;
+
+    $('jobModalBg').classList.add('open');
+  } catch (error) {
+    toast('Unable to load job details.');
+  }
+}
+
+async function submitApplyForm(jobId) {
+  const btn = document.getElementById('applySubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+  const cover  = (document.getElementById('applycover')?.value  || '').trim();
+  const edu    = (document.getElementById('applyedu')?.value    || '').trim();
+  const exp    = (document.getElementById('applyexp')?.value    || '').trim();
+  const skills = (document.getElementById('applyskills')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+
+  if (!cover && !edu && !exp) {
+    toast('Please fill in at least a cover letter or your education/experience.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Application →'; }
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:5001/api/job-seeker/applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ jobId, coverLetter: cover || 'Interested in this opportunity.', education: edu, experience: exp, skills }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || 'Unable to submit application.');
+    closeJobModal();
+    toast('✅ Application submitted successfully!');
+  } catch (error) {
+    toast(error.message || 'Unable to submit application.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Application →'; }
+  }
+}
+
+function closeJobModal() {
+  $('jobModalBg').classList.remove('open');
+}
+
+function openJobVacancyModal() {
+  const user = getSession();
+  if (!user || !['shop_owner', 'chamber_member'].includes(user.role) || user.status !== 'active') {
+    toast('Only active Shop Owners and Chamber Members can post job vacancies.');
+    return;
+  }
+
+  $('careerModalBox').innerHTML = `
+    <div class="modal-close" onclick="closeCareerModal()" style="cursor:pointer;font-size:22px;color:#5b6b64;text-align:right;margin-bottom:6px;">×</div>
+    <h2 style="font-size:18px;margin-bottom:4px;">Upload Job Vacancy</h2>
+    <p class="text-soft" style="margin-bottom:14px;">Submit a job opening for admin review. Once approved, it will appear in the Career Panel.</p>
+    <form class="job-post-form" onsubmit="submitJobVacancy(event)">
+      <div class="grid cols-2">
+        <div class="form-group"><label>Job Title</label><input id="vacancyTitle" required placeholder="e.g. Customer Service Executive"></div>
+        <div class="form-group"><label>Location</label><input id="vacancyLocation" required placeholder="e.g. Tirur"></div>
+        <div class="form-group"><label>Employment Type</label><select id="vacancyType"><option value="Full-time">Full-time</option><option value="Part-time">Part-time</option><option value="Contract">Contract</option><option value="Internship">Internship</option></select></div>
+        <div class="form-group"><label>Category</label><input id="vacancyCategory" placeholder="e.g. Retail, HR"></div>
+        <div class="form-group" style="grid-column:1 / -1;"><label>Description</label><textarea id="vacancyDescription" required rows="3" placeholder="Role summary and responsibilities"></textarea></div>
+        <div class="form-group"><label>Requirements</label><textarea id="vacancyRequirements" rows="2" placeholder="Qualifications and experience"></textarea></div>
+        <div class="form-group"><label>Skills</label><input id="vacancySkills" placeholder="comma separated skills"></div>
+        <div class="form-group"><label>Salary</label><input id="vacancySalary" placeholder="e.g. 15k"></div>
+        <div class="form-group"><label>Number of Vacancies</label><input id="vacancyQuantity" type="number" min="1" value="1"></div>
+        <div class="form-group"><label>Experience</label><input id="vacancyExperience" placeholder="e.g. Fresher, 2 years"></div>
+        <div class="form-group"><label>Education</label><input id="vacancyEducation" placeholder="e.g. 12th Pass, B.Com"></div>
+        <div class="form-group"><label>Application Method</label><select id="vacancyApplicationMethod"><option value="tirur_connect">Apply through Tirur Connect</option><option value="external">External application</option></select></div>
+        <div class="form-group"><label>Application Link</label><input id="vacancyApplicationLink" type="url" placeholder="Required for external applications"></div>
+        <div class="form-group"><label>Closing Date</label><input id="vacancyClosing" type="date"></div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block mt-12" id="vacancySubmitBtn">Submit for Admin Approval</button>
+    </form>
+  `;
+  $('careerModalBg').classList.add('open');
+}
+
+async function submitJobVacancy(event) {
+  event.preventDefault();
+  const btn = $('vacancySubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+  const payload = {
+    title: $('vacancyTitle').value.trim(),
+    description: $('vacancyDescription').value.trim(),
+    location: $('vacancyLocation').value.trim(),
+    employmentType: $('vacancyType').value,
+    category: $('vacancyCategory').value.trim(),
+    requirements: $('vacancyRequirements').value.trim(),
+    skills: $('vacancySkills').value.split(',').map((skill) => skill.trim()).filter(Boolean),
+    salary: $('vacancySalary').value.trim(),
+    quantity: Number($('vacancyQuantity').value || 1),
+    experience: $('vacancyExperience').value.trim(),
+    education: $('vacancyEducation').value.trim(),
+    applicationMethod: $('vacancyApplicationMethod').value,
+    applicationLink: $('vacancyApplicationLink').value.trim(),
+    closingDate: $('vacancyClosing').value || undefined,
+  };
+
+  try {
+    await apiRequest('/shop-owner/jobs', { method: 'POST', body: JSON.stringify(payload) });
+    closeCareerModal();
+    toast('Job vacancy submitted. Waiting for admin approval.');
+    await renderJobs();
+  } catch (error) {
+    toast(error.message || 'Unable to submit job vacancy.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit for Admin Approval'; }
+  }
+}
+
+// Save job functionality - LinkedIn style
+let savedJobIds = new Set();
+
+async function loadSavedJobs() {
+  const user = getSession();
+  if (!user || user.role !== 'job_seeker') return;
+  
+  try {
+    const response = await fetch('http://localhost:5001/api/job-seeker/saved-jobs', {
+      headers: { 'Authorization': 'Bearer ' + getAuthToken() }
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      savedJobIds = new Set((result.data || []).map(item => item.job?._id || item.job));
+      updateSaveButtonsUI();
+    }
+  } catch (error) {
+    console.log('Could not load saved jobs');
+  }
+}
+
+function updateSaveButtonsUI() {
+  document.querySelectorAll('.save-job-btn').forEach(btn => {
+    const jobId = btn.getAttribute('data-job-id');
+    const isSaved = savedJobIds.has(jobId);
+    
+    btn.classList.toggle('saved', isSaved);
+    btn.title = isSaved ? 'Unsave job' : 'Save job';
+    
+    // Update icon fill
+    const svg = btn.querySelector('svg');
+    if (svg) {
+      if (isSaved) {
+        svg.style.fill = 'currentColor';
+      } else {
+        svg.style.fill = 'none';
+      }
+    }
+  });
+}
+
+async function toggleSaveJob(jobId) {
+  const user = getSession();
+  if (!user || user.role !== 'job_seeker') {
+    toast('Please log in as a job seeker to save jobs.');
+    return;
+  }
+  
+  const button = document.querySelector(`[data-job-id="${jobId}"]`);
+  const isSaved = savedJobIds.has(jobId);
+  const method = isSaved ? 'DELETE' : 'POST';
+  
+  // Optimistic UI update
+  if (isSaved) {
+    savedJobIds.delete(jobId);
+  } else {
+    savedJobIds.add(jobId);
+  }
+  updateSaveButtonsUI();
+  
+  try {
+    const response = await fetch('http://localhost:5001/api/job-seeker/saved-jobs/' + jobId, {
+      method: method,
+      headers: { 
+        'Authorization': 'Bearer ' + getAuthToken(),
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const result = await response.json().catch(() => ({}));
+    
+    if (!response.ok) {
+      // Revert optimistic update
+      if (isSaved) {
+        savedJobIds.add(jobId);
+      } else {
+        savedJobIds.delete(jobId);
+      }
+      updateSaveButtonsUI();
+      toast(result.message || 'Unable to save job.');
+      return;
+    }
+    
+    // Show success feedback
+    if (isSaved) {
+      showSaveNotification('Job unsaved', '❌');
+    } else {
+      showSaveNotification('Job saved', '✅');
+    }
+    
+  } catch (error) {
+    // Revert optimistic update
+    if (isSaved) {
+      savedJobIds.add(jobId);
+    } else {
+      savedJobIds.delete(jobId);
+    }
+    updateSaveButtonsUI();
+    toast('Unable to save job. Please try again.');
+  }
+}
+
+function showSaveNotification(message, icon) {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--brand-dark);
+    color: white;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow-lg);
+  `;
+  
+  notification.innerHTML = `${icon} ${message}`;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease forwards';
+    setTimeout(() => notification.remove(), 300);
+  }, 2000);
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
+async function saveJob(jobId) {
+  const user = getSession();
+  if (!user || user.role !== 'job_seeker') {
+    toast('Please log in as a job seeker to save jobs.');
+    return;
+  }
+  
+  try {
+    const response = await fetch('http://localhost:5001/api/job-seeker/saved-jobs/' + jobId, {
+      method: 'POST',
+      headers: { 
+        'Authorization': 'Bearer ' + getAuthToken(),
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const result = await response.json().catch(() => ({}));
+    
+    if (!response.ok) {
+      toast(result.message || 'Unable to save job.');
+      return;
+    }
+    
+    toast('Job saved! View it in your Job Seeker Dashboard.');
+  } catch (error) {
+    toast('Unable to save job. Please try again.');
+  }
+}
+
+$('jobModalBg').onclick = (e) => {
+  if (e.target === $('jobModalBg')) closeJobModal();
+};
+$('careerModalBg').onclick = (e) => {
+  if (e.target === $('careerModalBg')) closeCareerModal();
+};
+
+renderCareerActions();
+renderJobs();
+loadSavedJobs(); // Load saved jobs on page load</script></body></html>

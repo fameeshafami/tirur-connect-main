@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Tirur Connect</title>
+<link rel="icon" type="image/svg+xml" href="assets/tirur-connect-icon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div data-chrome="topbar" class="topbar"></div>
+<header data-chrome="header" class="site-header"></header>
+<div data-chrome="mobilemenu" class="mobile-menu"></div>
+
+<main>
+  <section class="section">
+    <div class="container" style="max-width:460px;">
+      <div class="form-card">
+        <h2 style="font-size:18px;">Login to Tirur Connect</h2>
+        <p class="text-soft">Sign in with your Tirur Connect account.</p>
+
+        <form id="loginForm" class="mt-16" novalidate>
+          <div class="form-group"><label for="loginEmail">Email</label><input id="loginEmail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required></div>
+          <div class="form-group"><label for="loginPassword">Password</label><input id="loginPassword" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required></div>
+          <p id="loginError" class="text-soft" role="alert" aria-live="polite" style="display:none;"></p>
+          <button id="loginButton" class="btn btn-primary btn-block" type="submit">Login</button>
+          <p class="text-soft center mt-12"><a href="#" id="forgotPasswordLink" style="color:var(--brand); font-weight:700;">Forgot password?</a></p>
+          <p class="text-soft center mt-12">New here? <a href="login.html?register=shop_owner" style="color:var(--brand); font-weight:700;">Create a Shop Owner account</a> or <a href="login.html?register=job_seeker" style="color:var(--brand); font-weight:700;">Job Seeker account</a>.</p>
+        </form>
+        <form id="forgotPasswordForm" class="mt-16" novalidate style="display:none;">
+          <h2 style="font-size:18px;">Reset your password</h2>
+          <p class="text-soft">Enter your account email to create a password reset link.</p>
+          <div class="form-group"><label for="forgotEmail">Email</label><input id="forgotEmail" type="email" autocomplete="email" required></div>
+          <p id="forgotError" class="text-soft" role="alert" aria-live="polite" style="display:none;"></p>
+          <button id="forgotButton" class="btn btn-primary btn-block" type="submit">Send Reset Link</button>
+          <p class="text-soft center mt-12"><a href="#" id="backToLoginLink" style="color:var(--brand); font-weight:700;">Back to Login</a></p>
+        </form>
+        <form id="registerForm" class="mt-16" novalidate style="display:none;">
+          <h2 style="font-size:18px;">Create your Tirur Connect account</h2>
+          <div class="form-group"><label for="registerName">Full Name</label><input id="registerName" type="text" autocomplete="name" required></div>
+          <div class="form-group"><label for="registerEmail">Email</label><input id="registerEmail" type="email" autocomplete="email" required></div>
+          <div class="form-group"><label for="registerPhone">Phone</label><input id="registerPhone" type="tel" autocomplete="tel" required></div>
+          <div class="form-group"><label for="registerPassword">Password</label><input id="registerPassword" type="password" minlength="8" autocomplete="new-password" required></div>
+          <div class="form-group"><label for="registerRole">Account Type</label><select id="registerRole"><option value="shop_owner">Shop Owner</option><option value="job_seeker">Job Seeker</option></select></div>
+          <p id="registerError" class="text-soft" role="alert" aria-live="polite" style="display:none;"></p>
+          <button id="registerButton" class="btn btn-primary btn-block" type="submit">Create Account</button>
+          <p class="text-soft center mt-12">Already registered? <a href="login.html" style="color:var(--brand); font-weight:700;">Login</a></p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer data-chrome="footer" class="site-footer"></footer>
+<nav data-chrome="tabbar" class="tabbar"></nav>
+
+<script src="js/app.js"></script>
+<script>
+renderChrome('login');
+
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const loginButton = document.getElementById('loginButton');
+const loginError = document.getElementById('loginError');
+const registerError = document.getElementById('registerError');
+const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+const backToLoginLink = document.getElementById('backToLoginLink');
+const forgotError = document.getElementById('forgotError');
+const requestedRegistrationRole = new URLSearchParams(location.search).get('register');
+
+if(requestedRegistrationRole === 'shop_owner' || requestedRegistrationRole === 'job_seeker'){
+  loginForm.style.display = 'none';
+  registerForm.style.display = 'block';
+  document.getElementById('registerRole').value = requestedRegistrationRole;
+}
+
+function showLoginError(message){
+  loginError.textContent = message;
+  loginError.style.display = 'block';
+}
+
+function showForgotPassword(){ loginForm.style.display = 'none'; registerForm.style.display = 'none'; forgotPasswordForm.style.display = 'block'; }
+function showLoginForm(){ loginForm.style.display = 'block'; registerForm.style.display = 'none'; forgotPasswordForm.style.display = 'none'; }
+forgotPasswordLink.addEventListener('click', (event)=>{ event.preventDefault(); showForgotPassword(); });
+backToLoginLink.addEventListener('click', (event)=>{ event.preventDefault(); showLoginForm(); });
+if(location.hash === '#forgot') showForgotPassword();
+
+function statusMessage(status){
+  return status === 'suspended' ? 'Your account has been suspended.'
+    : status === 'rejected' ? 'Your account access was rejected.'
+    : 'You do not have access to this account.';
+}
+
+function destinationForRole(role){
+  return ({
+    admin: 'admin.html',
+    shop_owner: 'shop-owner.html',
+    job_seeker: 'job-seeker.html',
+    chamber_member: 'chamber-member.html'
+  })[role] || 'index.html';
+}
+
+loginForm.addEventListener('submit', async (event)=>{
+  event.preventDefault();
+  loginError.style.display = 'none';
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if(!email || !password){
+    showLoginError('Please enter your email and password.');
+    return;
+  }
+
+  loginButton.disabled = true;
+  loginButton.textContent = 'Signing in...';
+
+  try{
+    const response = await fetch('http://localhost:5001/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await response.json().catch(()=>({}));
+
+    if(!response.ok){
+      if(response.status === 401) showLoginError('Invalid email or password.');
+      else if(response.status === 403) showLoginError(statusMessage(data.user?.status));
+      else if(response.status === 400) showLoginError('Please check your login details.');
+      else if(response.status >= 500) showLoginError('Something went wrong. Please try again later.');
+      else showLoginError('Unable to sign in. Please check your details and try again.');
+      return;
+    }
+
+    if(!data.token || !data.user || !data.user.role){
+      showLoginError('Unable to sign in. Please try again.');
+      return;
+    }
+
+    saveAuthSession(data.token, data.user);
+    window.location.href = destinationForRole(data.user.role);
+  }catch(error){
+    showLoginError('Unable to connect to the server. Please check that the backend is running.');
+  }finally{
+    loginButton.disabled = false;
+    loginButton.textContent = 'Login';
+  }
+});
+
+registerForm.addEventListener('submit', async (event)=>{
+  event.preventDefault();
+  registerError.style.display = 'none';
+  const payload = {
+    name: document.getElementById('registerName').value.trim(),
+    email: document.getElementById('registerEmail').value.trim(),
+    phone: document.getElementById('registerPhone').value.trim(),
+    password: document.getElementById('registerPassword').value,
+    role: document.getElementById('registerRole').value
+  };
+  if(!payload.name || !payload.email || !payload.phone || !payload.password){
+    registerError.textContent = 'Please complete all fields.';
+    registerError.style.display = 'block';
+    return;
+  }
+  const button = document.getElementById('registerButton');
+  button.disabled = true;
+  button.textContent = 'Creating account...';
+  try{
+    const response = await fetch('http://localhost:5001/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(()=>({}));
+    if(!response.ok){
+      if(response.status === 409){
+        registerError.innerHTML = 'This email is already registered. <a href="login.html" style="color:var(--brand); font-weight:700;">Log in</a> or <a href="login.html#forgot" id="duplicateForgotLink" style="color:var(--brand); font-weight:700;">reset your password</a>.';
+        registerError.style.display = 'block';
+        document.getElementById('duplicateForgotLink').addEventListener('click', (event)=>{ event.preventDefault(); showLoginForm(); showForgotPassword(); });
+      } else {
+        registerError.textContent = data.message || 'Unable to create your account.';
+      }
+      registerError.style.display = 'block';
+      return;
+    }
+    if(!data.token || !data.user || !data.user.role){
+      registerError.textContent = 'Account created, but automatic login was unavailable. Please log in.';
+      registerError.style.display = 'block';
+      return;
+    }
+    saveAuthSession(data.token, data.user);
+    window.location.href = destinationForRole(data.user.role);
+  }catch(error){
+    registerError.textContent = 'Unable to connect to the server. Please check that the backend is running.';
+    registerError.style.display = 'block';
+  }finally{
+    button.disabled = false;
+    button.textContent = 'Create Account';
+  }
+});
+
+forgotPasswordForm.addEventListener('submit', async (event)=>{
+  event.preventDefault();
+  forgotError.style.display = 'none';
+  const email = document.getElementById('forgotEmail').value.trim();
+  if(!email){ forgotError.textContent = 'Please enter your email.'; forgotError.style.display = 'block'; return; }
+  const button = document.getElementById('forgotButton');
+  button.disabled = true;
+  button.textContent = 'Creating link...';
+  try{
+    const response = await fetch('http://localhost:5001/api/auth/forgot-password', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email }) });
+    const data = await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(data.message || 'Unable to create reset link.');
+    forgotError.innerHTML = data.resetUrl ? `Reset link ready for local development: <a href="${data.resetUrl}" style="color:var(--brand); font-weight:700;">Open reset page</a>` : data.message;
+    forgotError.style.display = 'block';
+  }catch(error){ forgotError.textContent = error.message || 'Unable to create reset link.'; forgotError.style.display = 'block'; }
+  finally{ button.disabled = false; button.textContent = 'Send Reset Link'; }
+});
+</script>
+</body>
+</html>
